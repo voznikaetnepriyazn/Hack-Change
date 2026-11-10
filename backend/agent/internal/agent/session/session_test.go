@@ -98,6 +98,56 @@ func TestMessagesReturnsIndependentCopy(t *testing.T) {
 	}
 }
 
+func TestMessagesDeepCopiesNestedFields(t *testing.T) {
+	index := 1
+	original := openai.ChatCompletionMessage{
+		Role: openai.ChatMessageRoleAssistant,
+		FunctionCall: &openai.FunctionCall{
+			Name:      "original-function",
+			Arguments: `{"value":1}`,
+		},
+		ToolCalls: []openai.ToolCall{{
+			Index: &index,
+			Function: openai.FunctionCall{
+				Name:      "original-tool",
+				Arguments: `{"value":2}`,
+			},
+		}},
+		MultiContent: []openai.ChatMessagePart{{
+			Type:     openai.ChatMessagePartTypeImageURL,
+			ImageURL: &openai.ChatMessageImageURL{URL: "https://example.test/original"},
+		}},
+	}
+	s := NewSession("system")
+	s.AddMessage(original)
+
+	original.FunctionCall.Name = "changed-after-add"
+	original.ToolCalls[0].Function.Name = "changed-after-add"
+	*original.ToolCalls[0].Index = 99
+	original.MultiContent[0].ImageURL.URL = "https://example.test/changed-after-add"
+
+	got := s.Messages()[1]
+	if got.FunctionCall.Name != "original-function" ||
+		got.ToolCalls[0].Function.Name != "original-tool" ||
+		*got.ToolCalls[0].Index != 1 ||
+		got.MultiContent[0].ImageURL.URL != "https://example.test/original" {
+		t.Fatalf("AddMessage() retained caller-owned nested data: %#v", got)
+	}
+
+	got.FunctionCall.Name = "changed-returned-copy"
+	got.ToolCalls[0].Function.Name = "changed-returned-copy"
+	*got.ToolCalls[0].Index = 100
+	got.MultiContent[0].ImageURL.URL = "https://example.test/changed-returned-copy"
+
+	stored := s.Messages()[1]
+	if stored.FunctionCall.Name != "original-function" ||
+		stored.ToolCalls[0].Function.Name != "original-tool" ||
+		*stored.ToolCalls[0].Index != 1 ||
+		stored.MultiContent[0].ImageURL.URL != "https://example.test/original" {
+		t.Fatalf("Messages() exposed nested session-owned data: %#v", stored)
+	}
+}
+
 func TestLockTurnSerializesTurnOwnership(t *testing.T) {
 	s := NewSession("system")
 	unlockFirst, err := s.LockTurn(context.Background())

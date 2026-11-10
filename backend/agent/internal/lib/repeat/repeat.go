@@ -22,13 +22,30 @@ func NewRepetitionDetector(bufSize int) *RepetitionDetector {
 
 // Feed a new chunk of text to the detector.
 func (d *RepetitionDetector) Feed(delta string) bool {
-	d.buf = append(d.buf, delta...)
+	if d.triggered {
+		return true
+	}
+
+	if len(delta) >= d.bufSize {
+		d.buf = append(d.buf[:0], delta[len(delta)-d.bufSize:]...)
+	} else {
+		d.buf = append(d.buf, delta...)
+		if len(d.buf) > d.bufSize {
+			copy(d.buf, d.buf[len(d.buf)-d.bufSize:])
+			d.buf = d.buf[:d.bufSize]
+		}
+	}
+
 	if len(d.buf) < d.bufSize {
 		return false
 	}
 
 	window := d.buf[len(d.buf)-d.bufSize:]
-	for patLen := 1; patLen <= 20; patLen++ {
+	maxPatternLength := len(window) / 2
+	if maxPatternLength > 20 {
+		maxPatternLength = 20
+	}
+	for patLen := 1; patLen <= maxPatternLength; patLen++ {
 		pattern := window[:patLen]
 		covers := true
 		for i := patLen; i < len(window); i += patLen {

@@ -25,6 +25,7 @@ type RunResult struct {
 // Run is a ReAct-cycle with wrappers. Turns sharing a session are serialized.
 func Run(ctx context.Context, cfg config.AgentConfig, userMessage string) RunResult {
 	res := RunResult{}
+	cfg.Limits = cfg.Limits.WithDefaults()
 
 	if cfg.Limits.Deadline > 0 {
 		var cancel context.CancelFunc
@@ -34,7 +35,8 @@ func Run(ctx context.Context, cfg config.AgentConfig, userMessage string) RunRes
 
 	unlockTurn, err := cfg.Session.LockTurn(ctx)
 	if err != nil {
-		res.Err = fmt.Errorf("deadline exceeded: %w", err)
+		slog.Error("Failed to acquire session lock", "error", err)
+		res.Err = fmt.Errorf("failed to acquire session turn: %w", err)
 		return res
 	}
 	defer unlockTurn()

@@ -76,8 +76,8 @@ func TestNewAgentAndFluentOptions(t *testing.T) {
 	if got != agent {
 		t.Fatal("fluent configuration methods should return the same agent")
 	}
-	if agent.baseCfg.Limits != customLimits {
-		t.Errorf("configured limits = %+v, want %+v", agent.baseCfg.Limits, customLimits)
+	if agent.baseCfg.Limits != customLimits.WithDefaults() {
+		t.Errorf("configured limits = %+v, want %+v", agent.baseCfg.Limits, customLimits.WithDefaults())
 	}
 	if agent.baseCfg.Stream {
 		t.Error("WithStream(false) did not disable streaming")
@@ -86,6 +86,28 @@ func TestNewAgentAndFluentOptions(t *testing.T) {
 	if agent.baseCfg.On != nil {
 		t.Error("WithEventHandler(nil) did not clear the event handler")
 	}
+}
+
+func TestAgentSettingsCanChangeConcurrentlyWithRunConfigSnapshots(t *testing.T) {
+	agent := NewAgent(nil, nil, "test-model", false)
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(2)
+		go func(i int) {
+			defer wg.Done()
+			agent.WithStream(i%2 == 0)
+			agent.WithEventHandler(func(event.Event) {})
+			agent.WithLimits(config.Limits{MaxIterations: i + 1})
+		}(i)
+		go func(i int) {
+			defer wg.Done()
+			cfg := agent.configForSession(fmt.Sprintf("session-%d", i))
+			if cfg.Session == nil || cfg.Loop == nil {
+				t.Errorf("config snapshot is missing session or loop detector: %+v", cfg)
+			}
+		}(i)
+	}
+	wg.Wait()
 }
 
 func TestConfigForSessionCreatesIndependentLoopDetectors(t *testing.T) {

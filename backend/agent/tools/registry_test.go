@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -20,9 +22,9 @@ type registryTestTool struct {
 	execute     func(context.Context, string) (string, error)
 }
 
-func (t *registryTestTool) Name() string                  { return t.name }
-func (t *registryTestTool) Description() string           { return t.description }
-func (t *registryTestTool) Parameters() json.RawMessage   { return t.parameters }
+func (t *registryTestTool) Name() string                { return t.name }
+func (t *registryTestTool) Description() string         { return t.description }
+func (t *registryTestTool) Parameters() json.RawMessage { return t.parameters }
 func (t *registryTestTool) Execute(ctx context.Context, args string) (string, error) {
 	return t.execute(ctx, args)
 }
@@ -260,5 +262,109 @@ func TestRegistryExecuteBatchRunsMutatingToolsSequentially(t *testing.T) {
 		if results[i].ToolCallID != call.ID || results[i].Content != call.Function.Name {
 			t.Errorf("result %d = %+v, want call ID %q and content %q", i, results[i], call.ID, call.Function.Name)
 		}
+	}
+}
+
+func TestRegistryConcurrentRegisterAndRead(t *testing.T) {
+	registry := NewRegistry()
+	var wg sync.WaitGroup
+
+	for i := 0; i < 10; i++ {
+		i := i
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				name := fmt.Sprintf("tool-%d-%d", i, j)
+				registry.RegisterReadOnly(&registryTestTool{
+					name: name,
+					execute: func(context.Context, string) (string, error) {
+						return "ok", nil
+					},
+				})
+			}
+		}()
+	}
+
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 100; j++ {
+				registry.Has("tool-0-0")
+				registry.Rights("tool-0-0")
+				registry.Schemas()
+				registry.Execute(context.Background(), "tool-0-0", `{}`)
+			}
+		}()
+	}
+	wg.Wait()
+
+	if got := len(registry.Schemas()); got != 500 {
+		t.Errorf("Schemas() returned %d tools after registration, want 500", got)
+	}
+}
+
+func TestRegistryExecuteBatchDoesNotOverlapMutatingAndReadOnlyTools(t *testing.T) {
+	var activeReadOnly int32
+	var mutatingRanDuringRead int32
+	releaseReadOnly := make(chan struct{})
+	startedReadOnly := make(chan struct{})
+
+	registry := NewRegistry()
+	registry.RegisterReadOnly(&registryTestTool{
+		name: "read",
+		execute: func(context.Context, string) (string, error) {
+			atomic.AddInt32(&activeReadOnly, 1)
+			close(startedReadOnly)
+			<-releaseReadOnly
+			atomic.AddInt32(&activeReadOnly, -1)
+			return "read result", nil
+		},
+	})
+	registry.RegisterMutating(&registryTestTool{
+		name: "write",
+		execute: func(context.Context, string) (string, error) {
+			if atomic.LoadInt32(&activeReadOnly) != 0 {
+				atomic.StoreInt32(&mutatingRanDuringRead, 1)
+			}
+			return "write result", nil
+		},
+	})
+
+	calls := []openai.ToolCall{
+		{ID: "read-call", Function: openai.FunctionCall{Name: "read"}},
+		{ID: "write-call", Function: openai.FunctionCall{Name: "write"}},
+	}
+	done := make(chan []Message, 1)
+	go func() {
+		done <- registry.ExecuteBatch(context.Background(), calls, 2)
+	}()
+
+	select {
+	case <-startedReadOnly:
+	case <-time.After(time.Second):
+		close(releaseReadOnly)
+		t.Fatal("read-only tool did not start")
+	}
+
+	select {
+	case results := <-done:
+		close(releaseReadOnly)
+		t.Fatalf("batch completed while read-only call was blocked: %+v", results)
+	case <-time.After(25 * time.Millisecond):
+	}
+	close(releaseReadOnly)
+
+	select {
+	case results := <-done:
+		if len(results) != 2 || results[0].Content != "read result" || results[1].Content != "write result" {
+			t.Errorf("ExecuteBatch() results = %+v, want read then write results", results)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("ExecuteBatch() did not finish after releasing read-only tool")
+	}
+	if atomic.LoadInt32(&mutatingRanDuringRead) != 0 {
+		t.Error("mutating tool overlapped with a read-only tool")
 	}
 }

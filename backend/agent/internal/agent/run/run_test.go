@@ -387,10 +387,10 @@ func TestRunReturnsMaxIterationsError(t *testing.T) {
 
 func TestRunHandlesLLMErrors(t *testing.T) {
 	tests := []struct {
-		name       string
-		handler    http.HandlerFunc
-		wantErr    string
-		timeout    time.Duration
+		name    string
+		handler http.HandlerFunc
+		wantErr string
+		timeout time.Duration
 	}{
 		{
 			name: "API error",

@@ -55,7 +55,7 @@ func TestFeedDetectsRepeatedTextAcrossChunks(t *testing.T) {
 		if offset+size > len(stream) {
 			size = len(stream) - offset
 		}
-		if detector.Feed(stream[offset:offset+size]) {
+		if detector.Feed(stream[offset : offset+size]) {
 			return
 		}
 		offset += size
@@ -94,5 +94,48 @@ func TestFeedAccumulatesChunksUntilWindowIsFull(t *testing.T) {
 	}
 	if got := detector.Feed("z"); !got {
 		t.Fatal("Feed() did not detect repeated text after accumulating the full window")
+	}
+}
+
+func TestFeedBoundsBufferForLongStreams(t *testing.T) {
+	const windowSize = 32
+	detector := NewRepetitionDetector(windowSize)
+
+	for i := 0; i < 100; i++ {
+		detector.Feed("abcdefgh")
+		if got := len(detector.buf); got > windowSize {
+			t.Fatalf("buffer length = %d after chunk %d, want at most %d", got, i, windowSize)
+		}
+	}
+}
+
+func TestFeedDoesNotTreatWholeSmallWindowAsRepeatedPattern(t *testing.T) {
+	tests := []struct {
+		window int
+		text   string
+	}{
+		{window: 1, text: "x"},
+		{window: 2, text: "ab"},
+		{window: 3, text: "abc"},
+		{window: 8, text: "abcdefgh"},
+	}
+
+	for _, tt := range tests {
+		t.Run(strings.Repeat("x", tt.window), func(t *testing.T) {
+			detector := NewRepetitionDetector(tt.window)
+			if got := detector.Feed(tt.text); got {
+				t.Fatalf("Feed(%q) detected a repetition without at least two matching pattern copies", tt.text)
+			}
+		})
+	}
+}
+
+func TestFeedDetectionRemainsTriggered(t *testing.T) {
+	detector := NewRepetitionDetector(8)
+	if !detector.Feed(strings.Repeat("a", 8)) {
+		t.Fatal("Feed() did not detect repeated pattern")
+	}
+	if !detector.Feed("different") {
+		t.Fatal("Feed() returned false after detection was already triggered")
 	}
 }

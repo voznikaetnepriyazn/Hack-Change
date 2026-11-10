@@ -57,23 +57,26 @@ func (a *Agent) RunWithResult(ctx context.Context, sessionID string, userMessage
 	return run.Run(ctx, a.configForSession(sessionID), userMessage)
 }
 
-// WithLimits overrides the limits used by subsequent runs.
-// Configure limits before starting runs; concurrent configuration changes are not supported.
+// WithLimits overrides the limits used by runs that snapshot configuration afterward.
 func (a *Agent) WithLimits(limits config.Limits) *Agent {
-	a.baseCfg.Limits = limits
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.baseCfg.Limits = limits.WithDefaults()
 	return a
 }
 
-// WithEventHandler sets the event handler used by subsequent runs.
-// Configure the handler before starting runs; concurrent configuration changes are not supported.
+// WithEventHandler sets the handler used by runs that snapshot configuration afterward.
 func (a *Agent) WithEventHandler(on func(event.Event)) *Agent {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.baseCfg.On = on
 	return a
 }
 
-// WithStream enables or disables streaming for subsequent runs.
-// Configure streaming before starting runs; concurrent configuration changes are not supported.
+// WithStream enables or disables streaming for runs that snapshot configuration afterward.
 func (a *Agent) WithStream(enabled bool) *Agent {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.baseCfg.Stream = enabled
 	return a
 }
@@ -108,13 +111,12 @@ func (a *Agent) RunWithChannel(ctx context.Context, sessionID string, userMessag
 // configForSession returns a run-specific config and the persistent history for sessionID.
 func (a *Agent) configForSession(sessionID string) config.AgentConfig {
 	a.mu.Lock()
+	defer a.mu.Unlock()
 	sess, exists := a.sessions[sessionID]
 	if !exists {
 		sess = session.NewSession(SystemPromt)
 		a.sessions[sessionID] = sess
 	}
-	a.mu.Unlock()
-
 	cfg := a.baseCfg
 	cfg.Session = sess
 	cfg.Loop = direction.NewLoopDetector(loopWindow, loopThreshold)

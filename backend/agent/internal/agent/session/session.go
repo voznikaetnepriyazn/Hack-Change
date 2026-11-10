@@ -35,6 +35,10 @@ func (s *Session) LockTurn(ctx context.Context) (func(), error) {
 
 	select {
 	case s.turnMu <- struct{}{}:
+		if err := ctx.Err(); err != nil {
+			<-s.turnMu
+			return nil, err
+		}
 		return func() { <-s.turnMu }, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -66,7 +70,7 @@ func (s *Session) AddToolResult(toolCallId, msg string) {
 func (s *Session) AddMessage(msg openai.ChatCompletionMessage) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.messages = append(s.messages, msg)
+	s.messages = append(s.messages, cloneMessage(msg))
 }
 
 // Messages returns a copy of the session history.
@@ -74,6 +78,37 @@ func (s *Session) Messages() []openai.ChatCompletionMessage {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	result := make([]openai.ChatCompletionMessage, len(s.messages))
-	copy(result, s.messages)
+	for i, message := range s.messages {
+		result[i] = cloneMessage(message)
+	}
 	return result
+}
+
+func cloneMessage(message openai.ChatCompletionMessage) openai.ChatCompletionMessage {
+	if message.FunctionCall != nil {
+		functionCall := *message.FunctionCall
+		message.FunctionCall = &functionCall
+	}
+
+	if message.ToolCalls != nil {
+		message.ToolCalls = append([]openai.ToolCall(nil), message.ToolCalls...)
+		for i := range message.ToolCalls {
+			if message.ToolCalls[i].Index != nil {
+				index := *message.ToolCalls[i].Index
+				message.ToolCalls[i].Index = &index
+			}
+		}
+	}
+
+	if message.MultiContent != nil {
+		message.MultiContent = append([]openai.ChatMessagePart(nil), message.MultiContent...)
+		for i := range message.MultiContent {
+			if message.MultiContent[i].ImageURL != nil {
+				imageURL := *message.MultiContent[i].ImageURL
+				message.MultiContent[i].ImageURL = &imageURL
+			}
+		}
+	}
+
+	return message
 }

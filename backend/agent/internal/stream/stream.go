@@ -18,6 +18,7 @@ import (
 // StreamLLM is a wrapper around openai.ChatCompletionStream
 func StreamLLM(ctx context.Context, cfg config.AgentConfig, step int) (openai.ChatCompletionMessage, error) {
 	var finishReason string
+	cfg.Limits = cfg.Limits.WithDefaults()
 
 	llmCtx, cancel := context.WithTimeout(ctx, cfg.Limits.LLMTimeout)
 	defer cancel()
