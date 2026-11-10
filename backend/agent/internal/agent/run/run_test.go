@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -108,6 +109,108 @@ func TestRunReturnsAssistantResponse(t *testing.T) {
 	}
 	if got, ok := events[1].(event.LLMResponseEvent); !ok || got.Step != 1 || got.ToolCalls != 0 {
 		t.Errorf("second event = %#v, want LLMResponseEvent for step 1 without tools", events[1])
+	}
+}
+
+func TestRunSerializesTurnsForSameSession(t *testing.T) {
+	firstRequestStarted := make(chan struct{})
+	releaseFirstResponse := make(chan struct{})
+	var releaseOnce sync.Once
+	releaseFirst := func() { releaseOnce.Do(func() { close(releaseFirstResponse) }) }
+	defer releaseFirst()
+	requests := make(chan openai.ChatCompletionRequest, 2)
+	var requestCount int32
+
+	cfg := newRunTestConfig(t, func(w http.ResponseWriter, r *http.Request) {
+		var request openai.ChatCompletionRequest
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Errorf("decode request: %v", err)
+			return
+		}
+		requests <- request
+
+		if atomic.AddInt32(&requestCount, 1) == 1 {
+			close(firstRequestStarted)
+			select {
+			case <-releaseFirstResponse:
+			case <-r.Context().Done():
+				return
+			}
+			writeCompletion(w, openai.ChatCompletionMessage{
+				Role:    openai.ChatMessageRoleAssistant,
+				Content: "first answer",
+			}, "stop")
+			return
+		}
+
+		writeCompletion(w, openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleAssistant,
+			Content: "second answer",
+		}, "stop")
+	})
+	sharedSession := session.NewSession("system prompt")
+	cfg.Session = sharedSession
+
+	firstDone := make(chan RunResult, 1)
+	go func() {
+		firstDone <- Run(context.Background(), cfg, "first question")
+	}()
+
+	select {
+	case <-firstRequestStarted:
+	case <-time.After(time.Second):
+		t.Fatal("first run did not start an LLM request")
+	}
+	select {
+	case <-requests:
+	case <-time.After(time.Second):
+		t.Fatal("first LLM request was not captured")
+	}
+
+	secondDone := make(chan RunResult, 1)
+	go func() {
+		secondDone <- Run(context.Background(), cfg, "second question")
+	}()
+
+	select {
+	case request := <-requests:
+		t.Fatalf("second LLM request started before the first turn completed: %#v", request.Messages)
+	case <-time.After(25 * time.Millisecond):
+	}
+
+	releaseFirst()
+	for name, done := range map[string]<-chan RunResult{
+		"first":  firstDone,
+		"second": secondDone,
+	} {
+		select {
+		case result := <-done:
+			if result.Err != nil {
+				t.Errorf("%s Run() returned unexpected error: %v", name, result.Err)
+			}
+		case <-time.After(time.Second):
+			t.Fatalf("%s Run() did not finish", name)
+		}
+	}
+
+	secondRequest := <-requests
+	if len(secondRequest.Messages) != 4 {
+		t.Fatalf("second request history length = %d, want 4", len(secondRequest.Messages))
+	}
+	wantRolesAndContent := []struct {
+		role    string
+		content string
+	}{
+		{openai.ChatMessageRoleSystem, "system prompt"},
+		{openai.ChatMessageRoleUser, "first question"},
+		{openai.ChatMessageRoleAssistant, "first answer"},
+		{openai.ChatMessageRoleUser, "second question"},
+	}
+	for i, want := range wantRolesAndContent {
+		if secondRequest.Messages[i].Role != want.role || secondRequest.Messages[i].Content != want.content {
+			t.Errorf("second request message %d = (%q, %q), want (%q, %q)",
+				i, secondRequest.Messages[i].Role, secondRequest.Messages[i].Content, want.role, want.content)
+		}
 	}
 }
 
@@ -356,10 +459,10 @@ func TestRunReturnsErrorForExpiredContext(t *testing.T) {
 	if result.Iterations != 0 {
 		t.Errorf("Iterations = %d, want 0", result.Iterations)
 	}
-	if len(cfg.Session.Messages()) != 2 {
-		t.Errorf("session history length = %d, want system prompt and user input", len(cfg.Session.Messages()))
+	if len(cfg.Session.Messages()) != 1 {
+		t.Errorf("session history length = %d, want only the system prompt", len(cfg.Session.Messages()))
 	}
-	if err := cfg.Loop.Record("old", "input", "output"); err != nil {
-		t.Errorf("loop detector was not reset before run: %v", err)
+	if err := cfg.Loop.Record("old", "input", "output"); err == nil {
+		t.Error("loop detector was reset even though run did not acquire the session")
 	}
 }

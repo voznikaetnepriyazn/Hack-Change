@@ -22,7 +22,7 @@ type RunResult struct {
 	ToolsUsed  []string
 }
 
-// Run is a ReAct-cycle with wrappers.
+// Run is a ReAct-cycle with wrappers. Turns sharing a session are serialized.
 func Run(ctx context.Context, cfg config.AgentConfig, userMessage string) RunResult {
 	res := RunResult{}
 
@@ -31,6 +31,13 @@ func Run(ctx context.Context, cfg config.AgentConfig, userMessage string) RunRes
 		ctx, cancel = context.WithTimeout(ctx, cfg.Limits.Deadline)
 		defer cancel()
 	}
+
+	unlockTurn, err := cfg.Session.LockTurn(ctx)
+	if err != nil {
+		res.Err = fmt.Errorf("deadline exceeded: %w", err)
+		return res
+	}
+	defer unlockTurn()
 
 	if cfg.Loop != nil {
 		cfg.Loop.Reset()
