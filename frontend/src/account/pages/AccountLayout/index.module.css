@@ -1,0 +1,24 @@
+.account {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  gap: 32px;
+}
+
+.content {
+  position: relative;
+  padding-top: 80px;
+  padding-right: 60px;
+  width: 100%;
+}
+
+.logo {
+  position: absolute;
+  top: 0;
+  right: 60px;
+  width: 39px;
+}
+
+.logo ellipse{
+  fill: rgba(0, 0, 0, 0.25);
+}

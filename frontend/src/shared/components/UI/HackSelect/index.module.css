@@ -1,0 +1,52 @@
+.hackselectWrap{
+  position: relative;
+  display: inline-block;
+}
+.hackselect{
+  padding: 10px 20px;
+  width: 100%;
+  height: 59px;
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 15px;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: 400;
+  font-size: 24px;
+  line-height: calc(24/29*100%);
+  -webkit-appearance: none; 
+  -moz-appearance: none;   
+  appearance: none; 
+  padding-right: 50px;  
+  background-image: none;   
+}
+.hackselect:valid,
+.hackselect:focus{
+  color: #000000;
+}
+
+.hackselect::-ms-expand {
+  display: none;
+}
+
+.hackselectArrow {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;     
+  display: flex;            
+  color: black;             
+}
+
+.hackselect:focus + .hackselectArrow svg {
+  transform: rotate(180deg);
+}
+
+.hackselect:user-invalid {
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  color: #DB5B5B;
+}
+
+.hackselect:user-invalid::placeholder {
+  color: #DB5B5B;
+}

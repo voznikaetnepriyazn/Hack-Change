@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser } from "../../user/api/user.api";
+import { getCurrentUser } from "../api/account.api";
 import { AuthUser } from "../../auth/types/auth.types";
 
 export function AccountPage() {

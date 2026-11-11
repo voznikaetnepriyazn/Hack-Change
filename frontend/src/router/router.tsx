@@ -4,29 +4,63 @@ import type { RouteObject } from "react-router-dom";
 import { App } from "../App";
 import { LoginPage } from "../auth/pages/LoginPage";
 import { ProtectedRoute } from "../auth/components/ProtectedRoute";
-import { AccountPage } from "../user/pages/AccountPage";
+import { ChatPage } from "../account/pages/ChatPage";
+import { AccountLayout } from "../account/pages/AccountLayout";
+import { QuestionsPage } from "../account/pages/QuestionsPage";
+import { ProfilePage } from "../account/pages/ProfilePage";
+import { DocumentsPage } from "../account/pages/DocumentsPage";
+import { TasksPage } from "../account/pages/TasksPage";
 
-// Аннотация типа гарантирует, что поля path, element, children и т.д. будут проверены
 const routes: RouteObject[] = [
   {
     path: "/",
-    element: <App />, // Родительский компонент-макет, внутри должен быть <Outlet />
+    element: <App />,
     children: [
+      {
+        index: true,
+        element: <Navigate to="account" replace />,
+      },
+      {  path: "auth/login", element: <LoginPage /> },
       {
         path: "account",
         element: (
-            // <ProtectedRoute>
-            //   <AccountPage />
-            // </ProtectedRoute>
-          <AccountPage />
+          // <ProtectedRoute>
+          //   <AccountPage />
+          // </ProtectedRoute>
+          <AccountLayout />
         ),
+        children: [
+          {
+            index: true,
+            element: <Navigate to="chat" replace />,
+          },
+          {
+            path: "chat",
+            element: <ChatPage />,
+          },
+          {
+            path: "questions",
+            element: <QuestionsPage />,
+          },
+          {
+            path: "documents",
+            element: <DocumentsPage />,
+          },
+          {
+            path: "tasks",
+            element: <TasksPage />,
+          },
+          {
+            path: "profile",
+            element: <ProfilePage />,
+          },
+        ],
       },
-      { path: "auth/login", element: <LoginPage /> },
     ],
   },
   {
-    path: "*", // Маршрут 404
-    element: <Navigate to="/account" />,
+    path: "*",
+    element: <Navigate to="/auth/login" />,
   },
 ];
 
