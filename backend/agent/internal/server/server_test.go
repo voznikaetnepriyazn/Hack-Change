@@ -2,7 +2,9 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -16,9 +18,47 @@ import (
 	"github.com/gofiber/fiber/v2"
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/voznikaetnepriyazn/Hack-Change/agent/internal/agent"
+	"github.com/voznikaetnepriyazn/Hack-Change/agent/internal/auth/domain"
+	authhandler "github.com/voznikaetnepriyazn/Hack-Change/agent/internal/auth/handler"
+	authmiddleware "github.com/voznikaetnepriyazn/Hack-Change/agent/internal/auth/middleware"
+	authsession "github.com/voznikaetnepriyazn/Hack-Change/agent/internal/auth/session"
 	"github.com/voznikaetnepriyazn/Hack-Change/agent/internal/config"
 	tool "github.com/voznikaetnepriyazn/Hack-Change/agent/tools"
 )
+
+type testAuthSessions map[string]authsession.Session
+
+func (s testAuthSessions) Create(_ context.Context, userID string, _ time.Duration) (string, error) {
+	token := "token-" + userID
+	s[token] = authsession.Session{UserID: userID}
+	return token, nil
+}
+
+func (s testAuthSessions) Get(_ context.Context, token string) (authsession.Session, error) {
+	session, ok := s[token]
+	if !ok {
+		return authsession.Session{}, authsession.ErrNotFound
+	}
+	return session, nil
+}
+
+func (s testAuthSessions) Delete(_ context.Context, token string) error {
+	delete(s, token)
+	return nil
+}
+
+type testAuthUsers map[string]domain.User
+
+func (u testAuthUsers) FindByID(id string) (domain.User, bool) {
+	user, ok := u[id]
+	return user, ok
+}
+
+type testAuthenticator struct{}
+
+func (testAuthenticator) Authenticate(string, string) (domain.User, error) {
+	return domain.User{}, errors.New("not used by this test")
+}
 
 func newTestServer(t *testing.T, llmHandler http.HandlerFunc) *Server {
 	t.Helper()
@@ -39,6 +79,60 @@ func newTestServer(t *testing.T, llmHandler http.HandlerFunc) *Server {
 		LLMTimeout:    time.Second,
 	})
 	return NewServer(assistant)
+}
+
+func TestAuthenticatedServerRequiresInternAndIgnoresClientSessionIDs(t *testing.T) {
+	sessions := testAuthSessions{
+		"lead-token": authsession.Session{UserID: "lead-1"},
+	}
+	users := testAuthUsers{
+		"lead-1": {
+			ID:   "lead-1",
+			Role: domain.RoleLead,
+		},
+	}
+	authHandler, err := authhandler.New(testAuthenticator{}, sessions, authhandler.Config{
+		CookieName: "auth_session",
+		SessionTTL: time.Hour,
+	})
+	if err != nil {
+		t.Fatalf("authhandler.New() returned error: %v", err)
+	}
+	authMiddleware, err := authmiddleware.New(sessions, users, authmiddleware.Config{
+		CookieName: "auth_session",
+	})
+	if err != nil {
+		t.Fatalf("authmiddleware.New() returned error: %v", err)
+	}
+
+	assistant := agent.NewAgent(nil, tool.NewRegistry(), "unused", false)
+	s, err := NewServerWithAuth(assistant, AuthConfig{
+		Handler:        authHandler,
+		Middleware:     authMiddleware,
+		AllowedOrigins: []string{"http://localhost:3000"},
+	})
+	if err != nil {
+		t.Fatalf("NewServerWithAuth() returned error: %v", err)
+	}
+
+	unauthenticated := httptest.NewRequest(http.MethodPost, "/chat", strings.NewReader(`{"message":"hi"}`))
+	unauthenticated.Header.Set("Content-Type", "application/json")
+	unauthenticated.Header.Set("X-Session-ID", "attacker-controlled")
+	unauthenticatedResp := fiberRequest(t, s.app, unauthenticated)
+	unauthenticatedResp.Body.Close()
+	if unauthenticatedResp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("unauthenticated /chat status = %d, want %d", unauthenticatedResp.StatusCode, http.StatusUnauthorized)
+	}
+
+	leadRequest := httptest.NewRequest(http.MethodPost, "/chat", strings.NewReader(`{"message":"hi"}`))
+	leadRequest.Header.Set("Content-Type", "application/json")
+	leadRequest.Header.Set("X-Session-ID", "attacker-controlled")
+	leadRequest.AddCookie(&http.Cookie{Name: "auth_session", Value: "lead-token"})
+	leadResp := fiberRequest(t, s.app, leadRequest)
+	leadResp.Body.Close()
+	if leadResp.StatusCode != http.StatusForbidden {
+		t.Errorf("lead /chat status = %d, want %d", leadResp.StatusCode, http.StatusForbidden)
+	}
 }
 
 func writeLLMStream(w http.ResponseWriter, content string) {

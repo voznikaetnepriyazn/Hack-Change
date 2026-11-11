@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -12,9 +13,21 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/voznikaetnepriyazn/Hack-Change/agent/internal/agent"
+	"github.com/voznikaetnepriyazn/Hack-Change/agent/internal/auth/domain"
+	authhandler "github.com/voznikaetnepriyazn/Hack-Change/agent/internal/auth/handler"
+	authmiddleware "github.com/voznikaetnepriyazn/Hack-Change/agent/internal/auth/middleware"
 )
 
 const completedStreamRetention = time.Minute
+
+var ErrInvalidAuthConfig = errors.New("invalid authenticated server configuration")
+
+// AuthConfig contains the authentication dependencies required by protected routes.
+type AuthConfig struct {
+	Handler        *authhandler.Handler
+	Middleware     fiber.Handler
+	AllowedOrigins []string
+}
 
 type Server struct {
 	app      *fiber.App
@@ -31,7 +44,33 @@ type activeStream struct {
 	subscribed bool
 }
 
+// NewServer creates a server without authentication. Use only for tests or local development.
+// Production servers must be created with NewServerWithAuth.
 func NewServer(a *agent.Agent) *Server {
+	return newServer(a, nil, nil, false, "*", false)
+}
+
+// NewServerWithAuth creates a server whose chat routes require an authenticated intern.
+func NewServerWithAuth(a *agent.Agent, cfg AuthConfig) (*Server, error) {
+	if cfg.Handler == nil || cfg.Middleware == nil || len(cfg.AllowedOrigins) == 0 {
+		return nil, ErrInvalidAuthConfig
+	}
+	for _, origin := range cfg.AllowedOrigins {
+		if strings.TrimSpace(origin) == "" || strings.TrimSpace(origin) == "*" {
+			return nil, ErrInvalidAuthConfig
+		}
+	}
+	return newServer(
+		a,
+		cfg.Handler,
+		cfg.Middleware,
+		true,
+		strings.Join(cfg.AllowedOrigins, ","),
+		true,
+	), nil
+}
+
+func newServer(a *agent.Agent, authHandler *authhandler.Handler, authMiddleware fiber.Handler, requireAuth bool, allowedOrigins string, allowCredentials bool) *Server {
 	app := fiber.New()
 
 	s := &Server{
@@ -41,16 +80,21 @@ func NewServer(a *agent.Agent) *Server {
 	}
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*", // especially for hackaton
-		AllowHeaders: "Origin, Content-Type, Accept, X-Session-ID",
-		AllowMethods: "GET, POST, OPTIONS",
+		AllowOrigins:     allowedOrigins,
+		AllowHeaders:     "Origin, Content-Type, Accept",
+		AllowMethods:     "GET, POST, OPTIONS",
+		AllowCredentials: allowCredentials,
 	}))
 
-	s.setupRoutes()
+	s.setupRoutes(authHandler, authMiddleware, requireAuth)
 	return s
 }
 
-func (s *Server) setupRoutes() {
+func (s *Server) setupRoutes(authHandler *authhandler.Handler, authMiddleware fiber.Handler, requireAuth bool) {
+	if authHandler != nil {
+		authHandler.RegisterRoutes(s.app)
+	}
+
 	// basic heailth check endpoint
 	s.app.Get("/health", func(c *fiber.Ctx) error {
 		s.mu.Lock()
@@ -67,7 +111,7 @@ func (s *Server) setupRoutes() {
 	})
 
 	// andpoint for message sending
-	s.app.Post("/chat", func(c *fiber.Ctx) error {
+	chatHandler := func(c *fiber.Ctx) error {
 		var req struct {
 			Message string `json:"message"`
 		}
@@ -75,7 +119,13 @@ func (s *Server) setupRoutes() {
 			return c.Status(400).JSON(fiber.Map{"error": "Invalid request"})
 		}
 
-		sessionID := strings.Clone(c.Get("X-Session-ID", "default-user")) // frontend must send ID
+		sessionID := strings.Clone(c.Get("X-Session-ID"))
+		if requireAuth {
+			sessionID, _ = authmiddleware.UserID(c)
+		}
+		if sessionID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Session ID is required"})
+		}
 		message := strings.Clone(req.Message)
 		ctx, cancel := context.WithCancel(context.Background())
 		stream := &activeStream{
@@ -128,11 +178,22 @@ func (s *Server) setupRoutes() {
 		}()
 
 		return c.SendStatus(fiber.StatusAccepted)
-	})
+	}
+	if requireAuth {
+		s.app.Post("/chat", authMiddleware, requireIntern, chatHandler)
+	} else {
+		s.app.Post("/chat", chatHandler)
+	}
 
 	// andpoint for SSE
-	s.app.Get("/stream", func(c *fiber.Ctx) error {
-		sessionID := strings.Clone(c.Query("sessionId", "default-user"))
+	streamHandler := func(c *fiber.Ctx) error {
+		sessionID := strings.Clone(c.Query("sessionId"))
+		if requireAuth {
+			sessionID, _ = authmiddleware.UserID(c)
+		}
+		if sessionID == "" {
+			return c.Status(fiber.StatusBadRequest).SendString("Session ID is required")
+		}
 
 		s.mu.Lock()
 		stream := s.channels[sessionID]
@@ -222,7 +283,23 @@ func (s *Server) setupRoutes() {
 		})
 
 		return nil
-	})
+	}
+	if requireAuth {
+		s.app.Get("/stream", authMiddleware, requireIntern, streamHandler)
+	} else {
+		s.app.Get("/stream", streamHandler)
+	}
+}
+
+func requireIntern(c *fiber.Ctx) error {
+	role, ok := authmiddleware.UserRole(c)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Authentication required"})
+	}
+	if role != domain.RoleIntern {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Chat access is restricted"})
+	}
+	return c.Next()
 }
 
 func (s *Server) Start(port string) error {
