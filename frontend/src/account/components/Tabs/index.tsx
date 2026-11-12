@@ -15,17 +15,11 @@ export const Tabs = ({ activeTab, setActiveTab, tags }: TabsProps) => {
 
   return (
     <div className={styles.tabs}>
-      <div
-        className={`${styles.tab} ${activeTab === "all" ? styles.active : ""}`}
-        onClick={() => handleClick("all")}
-      >
-        Все вопросы
-      </div>
       {tags.map((tag) => (
         <div
-          className={`${styles.tab} ${activeTab === tag.name ? styles.active : ""}`}
+          className={`${styles.tab} ${activeTab === tag.tab ? styles.active : ""}`}
           key={tag.id}
-          onClick={() => handleClick(tag.name)}
+          onClick={() => handleClick(tag.tab)}
         >
           {tag.name}
         </div>

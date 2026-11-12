@@ -11,9 +11,25 @@ export interface Question {
   answer: string;
 }
 
+export interface Document {
+  id: number;
+  title: string;
+  description: string;
+  link: string;
+}
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string;
+  status: "active" | "completed";
+  deadline: Date;
+}
+
 export interface Tag {
   id: number;
   name: string;
+  tab: string;
   items: number[];
 }
 

@@ -18,7 +18,7 @@ export const QuestionsPage = () => {
   const items =
   activeTab === "all"
     ? []
-    : tags.find((tag) => tag.name === activeTab)?.items ?? [];
+    : tags.find((tag) => tag.tab === activeTab)?.items ?? [];
 
   return (
     <div className={styles.page}>

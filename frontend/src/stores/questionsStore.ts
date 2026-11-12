@@ -14,6 +14,32 @@ interface QuestionsState {
 export const useQuestionsStore = create<QuestionsState>((set) => ({
   title: "Частые вопросы",
   description: "Быстрые ответы на популярные вопросы о стажировке и работе в Авито.",
+  tags: [
+    {
+      id: 0,
+      name: "Все вопросы",
+      tab: "all",
+      items: [],
+    },
+    {
+      id: 1,
+      name: "Стажировка",
+      tab: "internship",
+      items: [1, 2],
+    },
+    {
+      id: 2,
+      name: "Доступы",
+      tab: "access",
+      items: [4, 5],
+    },
+    {
+      id: 3,
+      name: "Офис и быт",
+      tab: "office",
+      items: [3, 6],
+    },
+  ],
   questions: [
     {
       id: 1,
@@ -45,23 +71,6 @@ export const useQuestionsStore = create<QuestionsState>((set) => ({
       title: "Вопрос 5",
       description: "Описание вопроса 5",
       answer: "Ответ на вопрос 5",
-    },
-  ],
-  tags: [
-    {
-      id: 1,
-      name: "Стажировка",
-      items: [1, 2],
-    },
-    {
-      id: 2,
-      name: "Доступы",
-      items: [4, 5],
-    },
-    {
-      id: 3,
-      name: "Офис и быт",
-      items: [3, 6],
     },
   ],
   contentBlock: {
