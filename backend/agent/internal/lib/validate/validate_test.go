@@ -11,9 +11,9 @@ import (
 
 type validationTestTool struct{}
 
-func (validationTestTool) Name() string                  { return "test_tool" }
-func (validationTestTool) Description() string           { return "test tool" }
-func (validationTestTool) Parameters() json.RawMessage   { return json.RawMessage(`{"type":"object"}`) }
+func (validationTestTool) Name() string                { return "test_tool" }
+func (validationTestTool) Description() string         { return "test tool" }
+func (validationTestTool) Parameters() json.RawMessage { return json.RawMessage(`{"type":"object"}`) }
 func (validationTestTool) Execute(context.Context, string) (string, error) {
 	return "ok", nil
 }
