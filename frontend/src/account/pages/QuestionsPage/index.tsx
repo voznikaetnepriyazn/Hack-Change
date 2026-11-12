@@ -1,9 +1,20 @@
+import { useState } from "react";
 import styles from "./index.module.css";
-import { HackButton } from "../../../shared/components/UI/HackButton";
-import { useNavigate } from "react-router-dom";
+import { useQuestionsStore } from "../../../stores/questionsStore";
+import { QuestionBlock } from "../../components/QuestionBlock";
+import { QuestionsList } from "../../components/QuestionsList";
+import { Tabs } from "../../components/Tabs";
+import { SearchInput } from "../../../shared/components/SearchInput";
 
 export const QuestionsPage = () => {
-  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const questions = useQuestionsStore((state) => state.questions);
+  const tags = useQuestionsStore((state) => state.tags);
+  const contentBlock = useQuestionsStore((state) => state.contentBlock);
+
+  const [activeTab, setActiveTab] = useState("all");
+  const [items, setItems] = useState<number[]>([]);
+
   return (
     <div className={styles.page}>
       <div className={styles.top}>
@@ -13,21 +24,17 @@ export const QuestionsPage = () => {
         </p>
       </div>
       <div className={styles.content}>
-        <div className={styles.left}></div>
+        <div className={styles.left}>
+          <div className={styles.left__top}>
+            <SearchInput search={search} placeholder="Найти ответ на вопрос..." setSearch={setSearch} />
+            <Tabs activeTab={activeTab} setActiveTab={setActiveTab} tags={tags} setItems={setItems} />
+          </div>
+          <div className={styles.left__content}>
+            <QuestionsList questions={questions} items={items} search={search} />
+          </div>
+        </div>
         <div className={styles.right}>
-          <h4 className={styles.right__title}>Не нашли ответ?</h4>
-          <p className={styles.right__description}>
-            Спросите AI Buddy — он поможет разобраться и подскажет, где найти
-            информацию.
-          </p>
-          <HackButton
-            className={styles.right__button}
-            onClick={() => {
-              navigate("/account/chat");
-            }}
-          >
-            Задать вопрос AI
-          </HackButton>
+          <QuestionBlock content={contentBlock} className={styles.right__content} />
         </div>
       </div>
     </div>

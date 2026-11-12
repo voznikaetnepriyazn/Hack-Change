@@ -3,11 +3,11 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { BrandName } from "../../../shared/components/BrandName";
 import { ProfileItem } from "../ProfileItem";
-import { IconChat } from "../../../assets/images/IconChat";
-import { IconAim } from "../../../assets/images/IconAim";
-import { IconQuestion } from "../../../assets/images/IconQuestion";
-import { IconDocuments } from "../../../assets/images/IconDocuments";
-import { IconArrow } from "../../../assets/images/IconArrow";
+import { IconChat } from "../../../shared/components/icons/IconChat";
+import { IconAim } from "../../../shared/components/icons/IconAim";
+import { IconQuestion } from "../../../shared/components/icons/IconQuestion";
+import { IconDocuments } from "../../../shared/components/icons/IconDocuments";
+import { IconArrow } from "../../../shared/components/icons/IconArrow";
 
 const links = [
   {

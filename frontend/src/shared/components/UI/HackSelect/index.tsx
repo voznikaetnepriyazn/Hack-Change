@@ -1,4 +1,4 @@
-import { ArrowSelect } from '../../../../assets/images/IconArrowSelect/index';
+import { IconArrowSelect } from '../../icons/IconArrowSelect/index';
 import styles from './index.module.css';
 
 type HackSelectProps = React.SelectHTMLAttributes<HTMLSelectElement>;
@@ -15,7 +15,7 @@ export function HackSelect({
       </select>
 
       <span className={styles.hackselectArrow} aria-hidden="true">
-        <ArrowSelect />
+        <IconArrowSelect />
       </span>
     </div>
   );

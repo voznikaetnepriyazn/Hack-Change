@@ -1,4 +1,4 @@
-import type { CurrentUserResponse } from "../types/user.types";
+import type { CurrentUserResponse } from "../types/account.types";
 
 export const isCurrentUserResponse = (
   data: unknown

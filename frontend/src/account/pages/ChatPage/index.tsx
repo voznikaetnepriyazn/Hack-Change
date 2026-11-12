@@ -1,11 +1,11 @@
 import styles from "./index.module.css";
 import { useEffect, useRef, useState } from "react";
-import { IconRocket } from "../../../assets/images/IconRocket";
-import { IconQuestionCircle } from "../../../assets/images/IconQuestionCircle";
-import { IconInfo } from "../../../assets/images/IconInfo";
-import { IconTeam } from "../../../assets/images/IconTeam";
-import { IconArrow } from "../../../assets/images/IconArrow";
-import { IconSend } from "../../../assets/images/IconSend";
+import { IconRocket } from "../../../shared/components/icons/IconRocket";
+import { IconQuestionCircle } from "../../../shared/components/icons/IconQuestionCircle";
+import { IconInfo } from "../../../shared/components/icons/IconInfo";
+import { IconTeam } from "../../../shared/components/icons/IconTeam";
+import { IconArrow } from "../../../shared/components/icons/IconArrow";
+import { IconSend } from "../../../shared/components/icons/IconSend";
 
 const buttons = [
   {

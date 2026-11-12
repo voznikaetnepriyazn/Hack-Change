@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ApiError from "../../../shared/errors/ApiError";
 import { useAuth } from "../../context/AuthContext";
 import image1 from "../../../assets/images/cloud-text.png";
-import { IconLogo } from "../../../assets/images/IconLogo";
+import { IconLogo } from "../../../shared/components/icons/IconLogo";
 import styles from "./index.module.css";
 import { HackSelect } from "../../../shared/components/UI/HackSelect";
 import { HackInput } from "../../../shared/components/UI/HackInput";

@@ -1,0 +1,27 @@
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 9px;
+  margin-bottom: 32px;
+}
+
+.tab {
+  cursor: pointer;
+  padding: 5px 20px;
+  height: 35px;
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: calc(22 / 18*100%);
+  color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tab.active {
+  background: #F0F0F0;
+  border-color: #F0F0F0;
+}
