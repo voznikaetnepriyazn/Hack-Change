@@ -6,10 +6,14 @@ interface QuestionsState {
   questions: Question[];
   tags: Tag[];
   contentBlock: ContentBlock;
+  title: string;
+  description: string;
 }
 
 
 export const useQuestionsStore = create<QuestionsState>((set) => ({
+  title: "Частые вопросы",
+  description: "Быстрые ответы на популярные вопросы о стажировке и работе в Авито.",
   questions: [
     {
       id: 1,

@@ -14,24 +14,28 @@ export const QuestionsList = ({ questions, items, search }: QuestionsListProps) 
 
 
   const handleClick = (id: number) => {
-    if (activeQuestion === id) {
-      setActiveQuestion(null);
-    } else {
-    setActiveQuestion(id);
-    }
+    setActiveQuestion((prev) => (prev === id ? null : id));
   };
 
-  const filteredQuestions = () => {
-    if (items.length === 0) {
-      return questions.filter((question) => question.answer.toLowerCase().includes(search.toLowerCase()));
-    }
-    return questions.filter((question) => items.includes(question.id) && question.answer.toLowerCase().includes(search.toLowerCase()));
-  };
+
+  const filteredQuestions = questions.filter((question) => {
+    const matchesTab = items.length === 0 || items.includes(question.id);
+  
+    const matchesSearch = [
+      question.title,
+      question.description,
+      question.answer,
+    ].some((value) =>
+      value.toLowerCase().includes(search.toLowerCase())
+    );
+  
+    return matchesTab && matchesSearch;
+  });
 
 
   return (
     <div className={styles.list}>
-      {filteredQuestions().map((question) => (
+      {filteredQuestions.map((question) => (
         <QuestionItem
           key={question.id}
           question={question}

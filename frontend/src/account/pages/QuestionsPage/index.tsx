@@ -11,23 +11,28 @@ export const QuestionsPage = () => {
   const questions = useQuestionsStore((state) => state.questions);
   const tags = useQuestionsStore((state) => state.tags);
   const contentBlock = useQuestionsStore((state) => state.contentBlock);
+  const title = useQuestionsStore((state) => state.title);
+  const description = useQuestionsStore((state) => state.description);
 
   const [activeTab, setActiveTab] = useState("all");
-  const [items, setItems] = useState<number[]>([]);
+  const items =
+  activeTab === "all"
+    ? []
+    : tags.find((tag) => tag.name === activeTab)?.items ?? [];
 
   return (
     <div className={styles.page}>
       <div className={styles.top}>
-        <h1 className={styles.title}>Частые вопросы</h1>
+        <h1 className={styles.title}>{title}</h1>
         <p className={styles.description}>
-          Быстрые ответы на популярные вопросы о стажировке и работе в Авито.
+          {description}
         </p>
       </div>
       <div className={styles.content}>
         <div className={styles.left}>
           <div className={styles.left__top}>
             <SearchInput search={search} placeholder="Найти ответ на вопрос..." setSearch={setSearch} />
-            <Tabs activeTab={activeTab} setActiveTab={setActiveTab} tags={tags} setItems={setItems} />
+            <Tabs activeTab={activeTab} setActiveTab={setActiveTab} tags={tags} />
           </div>
           <div className={styles.left__content}>
             <QuestionsList questions={questions} items={items} search={search} />
