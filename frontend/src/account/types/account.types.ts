@@ -1,5 +1,17 @@
 import { AuthUser } from "../../auth/types/auth.types";
 
+export interface User {
+  id: number;
+  name: string;
+  avatar: string | null;
+  position: string;
+  department: string;
+  phone?: string;
+  login: string;
+  vacationStart: Date;
+  vacationEnd: Date;
+}
+
 export interface CurrentUserResponse {
   user: AuthUser;
 }

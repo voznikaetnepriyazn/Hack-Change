@@ -49,3 +49,26 @@
   color: rgba(0, 0, 0, 0.5);
   line-height: 17px;
 }
+
+.profile.large {
+  max-width: 700px;
+}
+
+.profile.large .avatar {
+  width: 150px;
+  height: 150px;
+}
+
+.profile.large .right {
+  gap: 32px;
+}
+
+.profile.large .name {
+  font-weight: 600;
+  font-size: 52px;
+}
+
+.profile.large .position {
+  color: #000000;
+  line-height: calc(29 / 24*100%);
+}
