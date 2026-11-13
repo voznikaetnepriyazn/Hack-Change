@@ -8,6 +8,7 @@ export interface User {
   department: string;
   phone?: string;
   login: string;
+  role: "intern" | "leader";
   vacationStart: Date;
   vacationEnd: Date;
 }
