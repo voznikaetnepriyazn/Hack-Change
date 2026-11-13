@@ -1,12 +1,17 @@
 package embed
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"math"
-
-	openai "github.com/sashabaranov/go-openai"
+	"net/http"
+	"strings"
 )
+
+const maxEmbeddingResponseBytes = 16 << 20
 
 func (e *Embedder) Embed(ctx context.Context, text string) ([]float32, error) {
 	if err := e.validate(); err != nil {
@@ -36,7 +41,22 @@ func (e *Embedder) EmbedBatch(ctx context.Context, texts []string) ([][]float32,
 		}
 	}
 
-	return e.createEmbeddings(ctx, texts, documentInput)
+	const batchSize = 16
+	result := make([][]float32, 0, len(texts))
+
+	for start := 0; start < len(texts); start += batchSize {
+		end := start + batchSize
+		if end > len(texts) {
+			end = len(texts)
+		}
+		vectors, err := e.createEmbeddings(ctx, texts[start:end], documentInput)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, vectors...)
+	}
+
+	return result, nil
 }
 
 func (e *Embedder) EmbedQuery(ctx context.Context, query string) ([]float32, error) {
@@ -55,22 +75,74 @@ func (e *Embedder) EmbedQuery(ctx context.Context, query string) ([]float32, err
 }
 
 func (e *Embedder) createEmbeddings(ctx context.Context, texts []string, inputType string) ([][]float32, error) {
-	response, err := e.client.CreateEmbeddings(ctx, openai.EmbeddingRequestStrings{
+	payload := struct {
+		Input          []string `json:"input"`
+		Model          string   `json:"model"`
+		InputType      string   `json:"input_type"`
+		Modality       []string `json:"modality"`
+		EncodingFormat string   `json:"encoding_format"`
+		Dimensions     int      `json:"dimensions"`
+		Truncate       string   `json:"truncate"`
+		EmbeddingType  string   `json:"embedding_type"`
+	}{
 		Input:          texts,
-		Model:          openai.EmbeddingModel(e.model),
-		EncodingFormat: openai.EmbeddingEncodingFormatFloat,
-		ExtraBody: map[string]any{
-			"input_type":     inputType,
-			"modality":       []string{"text"},
-			"dimensions":     outputDimensions,
-			"truncate":       "END",
-			"embedding_type": "float",
-		},
-	})
+		Model:          e.model,
+		InputType:      inputType,
+		Modality:       []string{"text"},
+		EncodingFormat: "float",
+		Dimensions:     outputDimensions,
+		Truncate:       "END",
+		EmbeddingType:  "float",
+	}
+	requestBody, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("encode embedding request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		e.baseURL+"/embeddings",
+		bytes.NewReader(requestBody),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create embedding request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+e.apiKey)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := e.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("embedding request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
+	responseBody, err := io.ReadAll(io.LimitReader(resp.Body, maxEmbeddingResponseBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("read embedding response: %w", err)
+	}
+	if int64(len(responseBody)) > maxEmbeddingResponseBytes {
+		return nil, fmt.Errorf("embedding response exceeds %d bytes", maxEmbeddingResponseBytes)
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf(
+			"embedding request failed: HTTP %d %s: %s",
+			resp.StatusCode,
+			http.StatusText(resp.StatusCode),
+			strings.TrimSpace(string(responseBody)),
+		)
+	}
+
+	var response struct {
+		Data []struct {
+			Index     int       `json:"index"`
+			Embedding []float32 `json:"embedding"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(responseBody, &response); err != nil {
+		return nil, fmt.Errorf("decode embedding response: %w", err)
+	}
 	if len(response.Data) != len(texts) {
 		return nil, fmt.Errorf("%w: got %d vectors for %d inputs", ErrEmbeddingCount, len(response.Data), len(texts))
 	}

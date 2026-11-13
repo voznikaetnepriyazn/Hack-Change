@@ -57,8 +57,9 @@ func (r *Registry) RegisterMutating(t Tool) {
 	r.Register(t, Rights{ReadOnly: false, Parallel: false})
 }
 
-func (r *Registry) RegisterAll() {
+func (r *Registry) RegisterAll(answerTool Tool) {
 	r.RegisterReadOnly(teamsearch.NewTeamTool())
+	r.RegisterReadOnly(answerTool)
 }
 
 // Has returns true if the tool is registered

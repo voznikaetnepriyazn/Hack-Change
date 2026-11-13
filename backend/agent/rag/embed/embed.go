@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	openai "github.com/sashabaranov/go-openai"
+	"time"
 )
 
 const (
@@ -26,13 +25,14 @@ var (
 )
 
 type Embedder struct {
-	client  *openai.Client
-	model   string
-	baseURL string
+	apiKey     string
+	httpClient *http.Client
+	model      string
+	baseURL    string
 }
 
-// NewEmbedder creates a client for the NVIDIA NIM embeddings API.
-// An empty baseURL uses the NVIDIA API root; the SDK adds the /embeddings endpoint.
+// NewEmbedder creates an HTTP client for the NVIDIA NIM embeddings API.
+// An empty baseURL uses the NVIDIA API root.
 func NewEmbedder(apiKey, baseURL, model string) *Embedder {
 	return NewEmbedderWithHTTPClient(apiKey, baseURL, model, nil)
 }
@@ -48,17 +48,15 @@ func NewEmbedderWithHTTPClient(apiKey, baseURL, model string, httpClient *http.C
 	if model == "" {
 		model = defaultModel
 	}
-
-	config := openai.DefaultConfig(apiKey)
-	config.BaseURL = baseURL
-	if httpClient != nil {
-		config.HTTPClient = httpClient
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: 180 * time.Second}
 	}
 
 	return &Embedder{
-		client:  openai.NewClientWithConfig(config),
-		model:   model,
-		baseURL: baseURL,
+		apiKey:     strings.TrimSpace(apiKey),
+		httpClient: httpClient,
+		model:      model,
+		baseURL:    baseURL,
 	}
 }
 
@@ -71,7 +69,7 @@ type Embedding interface {
 var _ Embedding = (*Embedder)(nil)
 
 func (e *Embedder) validate() error {
-	if e == nil || e.client == nil || e.model == "" || e.baseURL == "" {
+	if e == nil || e.apiKey == "" || e.httpClient == nil || e.model == "" || e.baseURL == "" {
 		return ErrInvalidConfig
 	}
 	if !validHTTPSURL(e.baseURL) || strings.ContainsAny(e.model, "?#") {

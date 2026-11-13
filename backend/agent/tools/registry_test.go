@@ -371,10 +371,19 @@ func TestRegistryExecuteBatchDoesNotOverlapMutatingAndReadOnlyTools(t *testing.T
 
 func TestRegisterAllRegistersTeamToolAsReadOnly(t *testing.T) {
 	registry := NewRegistry()
-	registry.RegisterAll()
+	answerTool := &registryTestTool{
+		name: "answer_questions",
+		execute: func(context.Context, string) (string, error) {
+			return "", nil
+		},
+	}
+	registry.RegisterAll(answerTool)
 
 	if !registry.Has("search_team") {
 		t.Fatal("RegisterAll() did not register search_team")
+	}
+	if !registry.Has("answer_questions") {
+		t.Fatal("RegisterAll() did not register answer_questions")
 	}
 	rights, ok := registry.Rights("search_team")
 	if !ok {
@@ -382,5 +391,12 @@ func TestRegisterAllRegistersTeamToolAsReadOnly(t *testing.T) {
 	}
 	if !rights.ReadOnly || !rights.Parallel {
 		t.Errorf("search_team rights = %+v, want read-only and parallel", rights)
+	}
+	rights, ok = registry.Rights("answer_questions")
+	if !ok {
+		t.Fatal("Rights() did not return rights for answer_questions")
+	}
+	if !rights.ReadOnly || !rights.Parallel {
+		t.Errorf("answer_questions rights = %+v, want read-only and parallel", rights)
 	}
 }

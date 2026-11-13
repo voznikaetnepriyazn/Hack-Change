@@ -9,30 +9,20 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-
-	openai "github.com/sashabaranov/go-openai"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
-func (f roundTripFunc) Do(req *http.Request) (*http.Response, error) {
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
 }
 
-type roundTripperFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req)
-}
-
-func newTestEmbedder(baseURL, token, model string, client openai.HTTPDoer) *Embedder {
-	config := openai.DefaultConfig(token)
-	config.BaseURL = strings.TrimRight(baseURL, "/")
-	config.HTTPClient = client
+func newTestEmbedder(baseURL, token, model string, transport http.RoundTripper) *Embedder {
 	return &Embedder{
-		client:  openai.NewClientWithConfig(config),
-		model:   model,
-		baseURL: strings.TrimRight(baseURL, "/"),
+		apiKey:     token,
+		httpClient: &http.Client{Transport: transport},
+		model:      model,
+		baseURL:    strings.TrimRight(baseURL, "/"),
 	}
 }
 
@@ -259,7 +249,7 @@ func TestEmbedRejectsInvalidOrMismatchedResponses(t *testing.T) {
 			name:     "malformed response",
 			body:     `{"data":[`,
 			inputs:   []string{"hello"},
-			contains: "unexpected EOF",
+			contains: "unexpected end of JSON input",
 		},
 		{
 			name:     "inconsistent dimensions",
@@ -363,7 +353,7 @@ func TestNewEmbedderDefaultsBaseURLAndModel(t *testing.T) {
 func TestNewEmbedderWithHTTPClientUsesClientAndSingleEndpointSuffix(t *testing.T) {
 	const baseURL = "https://provider.example/v1"
 	var gotURL string
-	httpClient := &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+	httpClient := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 		gotURL = req.URL.String()
 		return jsonResponse(http.StatusOK, `{"data":[{"index":0,"embedding":[0.1]}]}`), nil
 	})}

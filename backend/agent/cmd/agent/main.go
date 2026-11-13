@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/sashabaranov/go-openai"
 
@@ -24,7 +25,10 @@ import (
 	authstorage "github.com/voznikaetnepriyazn/Hack-Change/agent/internal/auth/storage"
 	"github.com/voznikaetnepriyazn/Hack-Change/agent/internal/httpclient"
 	"github.com/voznikaetnepriyazn/Hack-Change/agent/internal/server"
+	"github.com/voznikaetnepriyazn/Hack-Change/agent/rag/embed"
+	"github.com/voznikaetnepriyazn/Hack-Change/agent/rag/storage"
 	tool "github.com/voznikaetnepriyazn/Hack-Change/agent/tools"
+	answerquestions "github.com/voznikaetnepriyazn/Hack-Change/agent/tools/answer_questions"
 )
 
 type runtimeConfig struct {
@@ -80,8 +84,38 @@ func run() error {
 	}
 	client := openai.NewClientWithConfig(llmConfig)
 
+	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
+	if databaseURL == "" {
+		return errors.New("DATABASE_URL is required for answer_questions")
+	}
+	embeddingAPIKey := strings.TrimSpace(os.Getenv("EMBED_KEY"))
+	if embeddingAPIKey == "" {
+		return errors.New("EMBED_KEY is required for answer_questions")
+	}
+	ragPool, err := pgxpool.New(context.Background(), databaseURL)
+	if err != nil {
+		return fmt.Errorf("configure RAG PostgreSQL connection: %w", err)
+	}
+	defer ragPool.Close()
+
+	ragConnectCtx, cancelRAGConnect := context.WithTimeout(context.Background(), 10*time.Second)
+	err = ragPool.Ping(ragConnectCtx)
+	cancelRAGConnect()
+	if err != nil {
+		return fmt.Errorf("connect to RAG PostgreSQL database: %w", err)
+	}
+	answerTool := answerquestions.NewAnswerTool(
+		embed.NewEmbedderWithHTTPClient(
+			embeddingAPIKey,
+			os.Getenv("EMBED_URL"),
+			os.Getenv("EMBED_MODEL"),
+			httpClient,
+		),
+		storage.NewStore(ragPool),
+	)
+
 	registry := tool.NewRegistry()
-	registry.RegisterAll()
+	registry.RegisterAll(answerTool)
 	slog.Info("Registered agent tools", "count", len(registry.Schemas()))
 
 	assistant := agent.NewAgent(client, registry, modelID, strings.EqualFold(os.Getenv("LLM_STREAM"), "true"))
