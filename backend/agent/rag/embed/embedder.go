@@ -56,10 +56,15 @@ func (e *Embedder) EmbedQuery(ctx context.Context, query string) ([]float32, err
 
 func (e *Embedder) createEmbeddings(ctx context.Context, texts []string, inputType string) ([][]float32, error) {
 	response, err := e.client.CreateEmbeddings(ctx, openai.EmbeddingRequestStrings{
-		Input: texts,
-		Model: openai.EmbeddingModel(e.model),
+		Input:          texts,
+		Model:          openai.EmbeddingModel(e.model),
+		EncodingFormat: openai.EmbeddingEncodingFormatFloat,
 		ExtraBody: map[string]any{
-			"input_type": inputType,
+			"input_type":     inputType,
+			"modality":       []string{"text"},
+			"dimensions":     outputDimensions,
+			"truncate":       "END",
+			"embedding_type": "float",
 		},
 	})
 	if err != nil {
@@ -87,7 +92,11 @@ func (e *Embedder) createEmbeddings(ctx context.Context, texts []string, inputTy
 		} else if len(item.Embedding) != dimensions {
 			return nil, fmt.Errorf("%w: input %d has %d dimensions, want %d", ErrInvalidResponse, item.Index, len(item.Embedding), dimensions)
 		}
-		vectors[item.Index] = item.Embedding
+		vector, err := truncateAndNormalizeEmbedding(item.Embedding)
+		if err != nil {
+			return nil, fmt.Errorf("normalize embedding for input %d: %w", item.Index, err)
+		}
+		vectors[item.Index] = vector
 	}
 
 	for i, vector := range vectors {
@@ -97,6 +106,28 @@ func (e *Embedder) createEmbeddings(ctx context.Context, texts []string, inputTy
 	}
 
 	return vectors, nil
+}
+
+// NVIDIA documents prefix truncation as supported when followed by L2 normalization.
+func truncateAndNormalizeEmbedding(vector []float32) ([]float32, error) {
+	if len(vector) <= outputDimensions {
+		return vector, nil
+	}
+
+	truncated := append([]float32(nil), vector[:outputDimensions]...)
+	var normSquared float64
+	for _, value := range truncated {
+		normSquared += float64(value) * float64(value)
+	}
+	if normSquared == 0 {
+		return nil, fmt.Errorf("%w: zero vector after truncation", ErrInvalidResponse)
+	}
+
+	norm := float32(math.Sqrt(normSquared))
+	for i := range truncated {
+		truncated[i] /= norm
+	}
+	return truncated, nil
 }
 
 func validateVector(vector []float32, inputIndex int) error {

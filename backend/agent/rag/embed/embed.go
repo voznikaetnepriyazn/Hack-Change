@@ -3,6 +3,7 @@ package embed
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -10,10 +11,11 @@ import (
 )
 
 const (
-	defaultBaseURL = "https://integrate.api.nvidia.com/v1/embeddings"
-	defaultModel   = "nvidia/nemotron-3.5-embed-1b"
-	documentInput  = "passage"
-	queryInput     = "query"
+	defaultBaseURL   = "https://integrate.api.nvidia.com/v1"
+	defaultModel     = "nvidia/nemotron-3.5-embed-1b"
+	outputDimensions = 1024
+	documentInput    = "passage"
+	queryInput       = "query"
 )
 
 var (
@@ -30,12 +32,18 @@ type Embedder struct {
 }
 
 // NewEmbedder creates a client for the NVIDIA NIM embeddings API.
-// An empty baseURL uses the NVIDIA API endpoint.
+// An empty baseURL uses the NVIDIA API root; the SDK adds the /embeddings endpoint.
 func NewEmbedder(apiKey, baseURL, model string) *Embedder {
+	return NewEmbedderWithHTTPClient(apiKey, baseURL, model, nil)
+}
+
+// NewEmbedderWithHTTPClient creates an embedder that uses the provided HTTP client.
+func NewEmbedderWithHTTPClient(apiKey, baseURL, model string, httpClient *http.Client) *Embedder {
 	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
 	if baseURL == "" {
 		baseURL = defaultBaseURL
 	}
+	baseURL = strings.TrimSuffix(baseURL, "/embeddings")
 	model = strings.TrimSpace(model)
 	if model == "" {
 		model = defaultModel
@@ -43,6 +51,9 @@ func NewEmbedder(apiKey, baseURL, model string) *Embedder {
 
 	config := openai.DefaultConfig(apiKey)
 	config.BaseURL = baseURL
+	if httpClient != nil {
+		config.HTTPClient = httpClient
+	}
 
 	return &Embedder{
 		client:  openai.NewClientWithConfig(config),

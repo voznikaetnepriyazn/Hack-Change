@@ -39,7 +39,6 @@ type Server struct {
 type activeStream struct {
 	channel    chan string
 	cancel     context.CancelFunc
-	replaced   chan struct{}
 	finished   chan struct{}
 	subscribed bool
 }
@@ -127,29 +126,23 @@ func (s *Server) setupRoutes(authHandler *authhandler.Handler, authMiddleware fi
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Session ID is required"})
 		}
 		message := strings.Clone(req.Message)
+		s.mu.Lock()
+		if _, exists := s.channels[sessionID]; exists {
+			s.mu.Unlock()
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "A response for this session is already in progress or awaiting delivery",
+			})
+		}
 		ctx, cancel := context.WithCancel(context.Background())
 		stream := &activeStream{
 			channel:  make(chan string, 100),
 			cancel:   cancel,
-			replaced: make(chan struct{}),
 			finished: make(chan struct{}),
 		}
-
-		s.mu.Lock()
-		previous := s.channels[sessionID]
 		s.channels[sessionID] = stream
 		s.mu.Unlock()
 
-		if previous != nil {
-			previous.cancel()
-			close(previous.replaced)
-		}
-
 		go func() {
-			if previous != nil {
-				<-previous.finished
-			}
-
 			defer func() {
 				close(stream.channel)
 				cancel()
@@ -275,9 +268,6 @@ func (s *Server) setupRoutes(authHandler *authhandler.Handler, authMiddleware fi
 					if err := w.Flush(); err != nil {
 						return
 					}
-
-				case <-stream.replaced:
-					return
 				}
 			}
 		})

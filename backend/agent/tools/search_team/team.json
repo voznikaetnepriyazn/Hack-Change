@@ -8,7 +8,7 @@
     "login": "d.volkov",
     "password": "MentorPass123!",
     "password_hash": "$2a$10$eImiTXuWVxfM37uY4JANjQ==",
-    "role": "mentor",
+    "role": "lead",
     "position": "Senior Backend Developer",
     "grade": "Senior",
     "team_id": "team_alpha",

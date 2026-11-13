@@ -348,19 +348,24 @@ func TestStreamEncodesNewlinesAsSSEDataLines(t *testing.T) {
 	}
 }
 
-func TestReplacingChatCancelsPreviousRunAndKeepsLatestStream(t *testing.T) {
+func TestChatRejectsNewMessageWhileResponseIsActive(t *testing.T) {
 	firstStarted := make(chan struct{})
+	releaseFirst := make(chan struct{})
+	firstCanceled := make(chan struct{})
 	var calls int32
 	s := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if atomic.AddInt32(&calls, 1) == 1 {
 			close(firstStarted)
 			select {
 			case <-r.Context().Done():
-			case <-time.After(250 * time.Millisecond):
+				close(firstCanceled)
+				return
+			case <-releaseFirst:
 			}
+			writeLLMStream(w, "first")
 			return
 		}
-		writeLLMStream(w, "latest")
+		writeLLMStream(w, "unexpected")
 	})
 	client, baseURL := serveFiberApp(t, s.app)
 
@@ -382,15 +387,24 @@ func TestReplacingChatCancelsPreviousRunAndKeepsLatestStream(t *testing.T) {
 	}
 
 	secondResp := postChatHTTP(t, client, baseURL, "replace-me", "second")
-	secondResp.Body.Close()
-	if secondResp.StatusCode != http.StatusAccepted {
-		t.Fatalf("second /chat status = %d, want %d", secondResp.StatusCode, http.StatusAccepted)
+	defer secondResp.Body.Close()
+	if secondResp.StatusCode != http.StatusConflict {
+		t.Fatalf("second /chat status = %d, want %d", secondResp.StatusCode, http.StatusConflict)
+	}
+	if got := atomic.LoadInt32(&calls); got != 1 {
+		t.Errorf("LLM calls = %d, want 1 while the first response is active", got)
+	}
+	select {
+	case <-firstCanceled:
+		t.Fatal("the active LLM request was canceled by a second chat request")
+	default:
 	}
 
+	close(releaseFirst)
 	select {
 	case <-firstStream.finished:
 	case <-time.After(time.Second):
-		t.Fatal("replaced stream did not finish")
+		t.Fatal("active stream did not finish")
 	}
 
 	streamResp := getStreamHTTP(t, client, baseURL, "replace-me")
@@ -399,10 +413,10 @@ func TestReplacingChatCancelsPreviousRunAndKeepsLatestStream(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read replacement SSE response: %v", err)
 	}
-	if !bytes.Contains(body, []byte("data: latest\n\n")) {
-		t.Errorf("replacement SSE stream = %q, want latest response", body)
+	if !bytes.Contains(body, []byte("data: first\n\n")) {
+		t.Errorf("SSE stream = %q, want the uninterrupted first response", body)
 	}
-	if bytes.Contains(body, []byte("data: first")) {
-		t.Errorf("replacement SSE stream contains stale response: %q", body)
+	if bytes.Contains(body, []byte("data: unexpected")) {
+		t.Errorf("SSE stream contains a response for the rejected request: %q", body)
 	}
 }

@@ -158,6 +158,38 @@ func TestLoginRejectsInvalidCredentialsWithoutCookie(t *testing.T) {
 	}
 }
 
+func TestLoginAcceptsManagerRole(t *testing.T) {
+	auth := testAuthenticator{user: domain.User{
+		ID:       "manager-1",
+		FullName: "Dana Manager",
+		Login:    "dana",
+		Role:     domain.RoleManager,
+	}}
+	h := newTestHandler(t, auth, newTestSessions())
+	app := fiber.New()
+	h.RegisterRoutes(app)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", strings.NewReader(
+		`{"login":"dana","password":"secret"}`,
+	))
+	req.Header.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test() returned error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("login status = %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read login response body: %v", err)
+	}
+	if !strings.Contains(string(body), `"role":"manager"`) {
+		t.Errorf("login response = %s, want manager role", body)
+	}
+}
+
 func TestLogoutRevokesSessionAndExpiresCookie(t *testing.T) {
 	sessions := newTestSessions()
 	sessions.values["opaque-test-token"] = authsession.Session{UserID: "user-1"}

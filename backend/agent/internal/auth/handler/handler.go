@@ -80,7 +80,7 @@ func (h *Handler) login(c *fiber.Ctx) error {
 		slog.Error("Authentication failed", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Authentication failed"})
 	}
-	if user.ID == "" || (user.Role != domain.RoleIntern && user.Role != domain.RoleLead) {
+	if user.ID == "" || (user.Role != domain.RoleIntern && user.Role != domain.RoleLead && user.Role != domain.RoleManager) {
 		slog.Error("Authenticator returned invalid user identity", "user_id", user.ID, "role", user.Role)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Authentication failed"})
 	}

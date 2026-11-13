@@ -42,7 +42,7 @@ func NewReading(path string) (*Reading, error) {
 		if user.FullName == "" {
 			return nil, fmt.Errorf("user %q has empty full name", user.Login)
 		}
-		if user.Role != domain.RoleIntern && user.Role != domain.RoleLead {
+		if user.Role != domain.RoleIntern && user.Role != domain.RoleLead && user.Role != domain.RoleManager {
 			return nil, fmt.Errorf("user %q has invalid role %q", user.Login, user.Role)
 		}
 		if _, exists := usersByLogin[user.Login]; exists {

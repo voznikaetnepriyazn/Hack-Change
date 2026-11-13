@@ -73,13 +73,18 @@ func (c *RecursiveChunker) Chunk(ctx context.Context, doc Document) ([]Chunk, er
 			chunkContent = suffixRunes(previousText, c.overlap) + chunkContent
 		}
 
-		hash := sha256.Sum256([]byte(chunkContent))
+		metadata := cloneMetadata(sd.Metadata)
+		idContent := chunkContent
+		if source, ok := metadata["source"].(string); ok && source != "" {
+			idContent = source + "\x00" + chunkContent
+		}
+		hash := sha256.Sum256([]byte(idContent))
 		id := uuid.NewSHA1(uuid.NameSpaceOID, hash[:])
 
 		chunks = append(chunks, Chunk{
 			ID:       id,
 			Content:  chunkContent,
-			Metadata: cloneMetadata(sd.Metadata),
+			Metadata: metadata,
 		})
 		previousText = text
 	}

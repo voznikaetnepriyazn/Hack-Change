@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/sashabaranov/go-openai"
+	teamsearch "github.com/voznikaetnepriyazn/Hack-Change/agent/tools/search_team"
 )
 
 type Registry struct {
@@ -57,7 +58,7 @@ func (r *Registry) RegisterMutating(t Tool) {
 }
 
 func (r *Registry) RegisterAll() {
-
+	r.RegisterReadOnly(teamsearch.NewTeamTool())
 }
 
 // Has returns true if the tool is registered

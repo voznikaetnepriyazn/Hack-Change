@@ -21,7 +21,8 @@ func writeUsersFile(t *testing.T, content string) string {
 func TestNewReadingLoadsUsersAndFindsByLogin(t *testing.T) {
 	path := writeUsersFile(t, `[
 		{"id":"u-1","full_name":"Alex Intern","login":"alex","role":"intern"},
-		{"id":"u-2","full_name":"Sam Lead","login":"sam","role":"lead"}
+		{"id":"u-2","full_name":"Sam Lead","login":"sam","role":"lead"},
+		{"id":"u-3","full_name":"Dana Manager","login":"dana","role":"manager"}
 	]`)
 
 	users, err := NewReading(path)
@@ -42,6 +43,11 @@ func TestNewReadingLoadsUsersAndFindsByLogin(t *testing.T) {
 		{
 			login: "sam",
 			want:  domain.User{ID: "u-2", FullName: "Sam Lead", Login: "sam", Role: domain.RoleLead},
+			ok:    true,
+		},
+		{
+			login: "dana",
+			want:  domain.User{ID: "u-3", FullName: "Dana Manager", Login: "dana", Role: domain.RoleManager},
 			ok:    true,
 		},
 		{login: "missing", ok: false},

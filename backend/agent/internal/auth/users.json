@@ -1,0 +1,23 @@
+[
+  {
+    "id": "usr_2001",
+    "full_name": "Волков Дмитрий Сергеевич",
+    "login": "d.volkov",
+    "role": "lead",
+    "password_hash": "$2a$10$LEPJAMuLXbOuo68R5fRxreqSG1ZsbRQCJVwVScCv1fp/hGpvTedCy"
+  },
+  {
+    "id": "usr_1001",
+    "full_name": "Смирнова Ева Дмитриевна",
+    "login": "e.smirnova",
+    "role": "intern",
+    "password_hash": "$2a$10$IeiRUrvzH.uOTWZ9d3VokOyLPai23CwaIiqAqmDruyY9i9KeOI7Ya"
+  },
+  {
+    "id": "usr_2002",
+    "full_name": "Морозова Елена Викторовна",
+    "login": "e.morozova",
+    "role": "manager",
+    "password_hash": "$2a$10$K8/vnIicz9Io4ymr22rP.Otabm/6P2MhnqFLEPP4rw.OAVlRYk9im"
+  }
+]

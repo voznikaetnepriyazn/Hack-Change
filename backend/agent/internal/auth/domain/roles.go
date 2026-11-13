@@ -3,8 +3,9 @@ package domain
 type Role string
 
 const (
-	RoleIntern Role = "intern"
-	RoleLead   Role = "lead"
+	RoleIntern  Role = "intern"
+	RoleLead    Role = "lead"
+	RoleManager Role = "manager"
 )
 
 type User struct {

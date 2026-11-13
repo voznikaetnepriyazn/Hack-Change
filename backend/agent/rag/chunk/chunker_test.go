@@ -155,6 +155,38 @@ func TestRecursiveChunkerPreservesDocumentMetadata(t *testing.T) {
 	}
 }
 
+func TestRecursiveChunkerScopesChunkIDsBySource(t *testing.T) {
+	chunker, err := NewRecursiveChunker(100, 0)
+	if err != nil {
+		t.Fatalf("NewRecursiveChunker() returned error: %v", err)
+	}
+
+	chunkFor := func(source string) Chunk {
+		chunks, err := chunker.Chunk(context.Background(), Document{
+			Content:  "same content",
+			Metadata: map[string]any{"source": source},
+		})
+		if err != nil {
+			t.Fatalf("Chunk(%q) returned error: %v", source, err)
+		}
+		if len(chunks) != 1 {
+			t.Fatalf("Chunk(%q) returned %d chunks, want 1", source, len(chunks))
+		}
+		return chunks[0]
+	}
+
+	first := chunkFor("playbook-master/guide.md")
+	sameSource := chunkFor("playbook-master/guide.md")
+	otherSource := chunkFor("synthetic/guide.md")
+
+	if first.ID != sameSource.ID {
+		t.Errorf("same document produced different chunk IDs: %s and %s", first.ID, sameSource.ID)
+	}
+	if first.ID == otherSource.ID {
+		t.Errorf("different sources produced the same chunk ID: %s", first.ID)
+	}
+}
+
 func TestRecursiveChunkerSkipsEmptyContent(t *testing.T) {
 	chunker, err := NewRecursiveChunker(20, 2)
 	if err != nil {

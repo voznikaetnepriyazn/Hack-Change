@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Format Go files",
+			"type": "shell",
+			"command": "gofmt",
+			"args": [
+				"-w",
+				"backend/agent/internal/httpclient/socks5.go",
+				"backend/agent/cmd/agent/main.go",
+				"backend/agent/cmd/ingest/main.go",
+				"backend/agent/rag/embed/embed.go",
+				"backend/agent/rag/embed/embedder_test.go"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

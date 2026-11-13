@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE IF NOT EXISTS chunks (
     id UUID PRIMARY KEY,
     content TEXT NOT NULL,
-    embedding vector(1536) NOT NULL,
+    embedding vector(1024) NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 

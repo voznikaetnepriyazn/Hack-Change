@@ -368,3 +368,19 @@ func TestRegistryExecuteBatchDoesNotOverlapMutatingAndReadOnlyTools(t *testing.T
 		t.Error("mutating tool overlapped with a read-only tool")
 	}
 }
+
+func TestRegisterAllRegistersTeamToolAsReadOnly(t *testing.T) {
+	registry := NewRegistry()
+	registry.RegisterAll()
+
+	if !registry.Has("search_team") {
+		t.Fatal("RegisterAll() did not register search_team")
+	}
+	rights, ok := registry.Rights("search_team")
+	if !ok {
+		t.Fatal("Rights() did not return rights for search_team")
+	}
+	if !rights.ReadOnly || !rights.Parallel {
+		t.Errorf("search_team rights = %+v, want read-only and parallel", rights)
+	}
+}
