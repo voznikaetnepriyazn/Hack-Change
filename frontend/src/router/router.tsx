@@ -25,10 +25,9 @@ const routes: RouteObject[] = [
       {
         path: "account",
         element: (
-          // <ProtectedRoute>
-          //   <AccountPage />
-          // </ProtectedRoute>
-          <AccountLayout />
+          <ProtectedRoute>
+            <AccountLayout />
+          </ProtectedRoute>
         ),
         children: [
           {
@@ -65,7 +64,7 @@ const routes: RouteObject[] = [
   },
   {
     path: "*",
-    element: <Navigate to="/auth/login" />,
+    element: <Navigate to="/account" />,
   },
 ];
 

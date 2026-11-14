@@ -23,7 +23,7 @@ interface InternState {
   progress: Progress;
   metrics: Metrics;
   themesinQuestions: ThemesinQuestions[];
-  setProfileUser: (user: User | null) => void;
+  setInternUser: (user: User | null) => void;
 }
 
 export const useInternStore = create<InternState>((set) => ({
@@ -50,5 +50,5 @@ export const useInternStore = create<InternState>((set) => ({
     },
   ],
 
-  setProfileUser: (user: User | null) => set({ user }),
+  setInternUser: (user: User | null) => set({ user }),
 }));

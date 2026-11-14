@@ -2,27 +2,60 @@ import styles from "./index.module.css";
 import { useInternStore } from "../../../stores/internStore";
 import { ProfileItem } from "../../components/ProfileItem";
 import { getIntern } from "../../api/account.api";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Loader } from "../../../shared/components/UI/Loader";
 
 export const InternPage = () => {
   const title = useInternStore((state) => state.title);
   const description = useInternStore((state) => state.description);
   const user = useInternStore((state) => state.user);
-  const setIntern = useInternStore((state) => state.setProfileUser);
+  const setIntern = useInternStore((state) => state.setInternUser);
   const progress = useInternStore((state) => state.progress);
   const metrics = useInternStore((state) => state.metrics);
   const themesinQuestions = useInternStore((state) => state.themesinQuestions);
+  const [isLoading, setIsLoading] = useState(() => !user);
+  const [error, setError] = useState<string | null>(null);
 
   const getInternData = async () => {
-    const intern = await getIntern();
-    if (intern) {
+    if (user) return;
+  
+    try {
+      setIsLoading(true);
+      setError(null);
+  
+      const intern = await getIntern();
+  
+      if (!intern) {
+        throw new Error("Данные стажёра не найдены");
+      }
+  
       setIntern(intern);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Не удалось загрузить данные стажёра"
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     getInternData();
-  }, []);
+  }, [user]);
+
+  if (isLoading) {
+    return <Loader />;
+  }
+  
+  if (error) {
+    return <p>{error}</p>;
+  }
+  
+  if (!user) {
+    return <p>Данные стажёра отсутствуют.</p>;
+  }
 
   return (
     <div className={styles.page}>

@@ -2,11 +2,14 @@ import styles from "./index.module.css";
 import { useProfileStore } from "../../../stores/profileStore";
 import { ProfileItem } from "../../components/ProfileItem";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../../auth/context/AuthContext";
+import { Loader } from "../../../shared/components/UI/Loader";
 
 export const ProfilePage = () => {
   const title = useProfileStore((state) => state.title);
   const description = useProfileStore((state) => state.description);
   const user = useProfileStore((state) => state.user);
+  const { isAuthLoading } = useAuth();  
 
   const statusRequest = (status: string) => {
     switch (status) {
@@ -20,6 +23,13 @@ export const ProfilePage = () => {
         return "Неизвестно";
     }
   };
+
+  if (isAuthLoading) {
+    return <Loader />;
+  }
+  if (!user) {
+    return <p>Не удалось загрузить данные пользователя.</p>;
+  }
 
   return (
     <div className={styles.page}>

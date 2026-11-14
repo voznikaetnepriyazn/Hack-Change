@@ -9,9 +9,11 @@ import { HackSelect } from "../../../shared/components/UI/HackSelect";
 import { HackInput } from "../../../shared/components/UI/HackInput";
 import { HackButton } from "../../../shared/components/UI/HackButton";
 import { BrandName } from "../../../shared/components/BrandName";
+import { Loader } from "../../../shared/components/UI/Loader";
 
 export const LoginPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -20,22 +22,49 @@ export const LoginPage = () => {
   const { login: loginUser } = useAuth();
   const navigate = useNavigate();
 
+  const validateForm = () => {
+    if (!login || !login.startsWith("@") || login.length < 3 || login.length > 100) {
+      setErrorMessage("Логин должен начинаться с @ и быть от 3 до 100 символов");
+      return false;
+    }
+    if (!password || password.length < 8 || password.length > 100) {
+      setErrorMessage("Пароль должен быть от 8 до 100 символов");
+      return false;
+    }
+    if (!role) {
+      setErrorMessage("Должность не может быть пустой");
+      return false;
+    }
+    return true;
+  };
+
+  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLogin(value.startsWith("@") ? value : `@${value}`);
+  };
+
   const handleSubmit: NonNullable<ComponentProps<"form">["onSubmit"]> = async (
     e,
   ) => {
     e.preventDefault();
-    
-    console.log(password, login, role);
+    setIsLoading(true);
     setErrorMessage(null);
-    
+
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await loginUser(login, password);
       setPassword("");
       setLogin("");
       setRole("");
       navigate("/account");
-    } catch{
-        setErrorMessage("Введены неверные данные");
+    } catch {
+      setErrorMessage("Введены неверные данные");
+    } finally {
+      setIsLoading(false);
     }
     // setErrorMessage(null);
     // try {
@@ -52,6 +81,10 @@ export const LoginPage = () => {
     //   }
     // }
   };
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   return (
     <main className="page">
@@ -86,7 +119,12 @@ export const LoginPage = () => {
                   required
                   placeholder="@username"
                   value={login}
-                  onChange={(e) => setLogin(e.target.value)}
+                  onFocus={() => {
+                    if (!login) {
+                      setLogin("@");
+                    }
+                  }}
+                  onChange={handleLoginChange}
                 />
               </label>
               <label>
@@ -113,7 +151,9 @@ export const LoginPage = () => {
                   <option value="lead">Руководитель</option>
                 </HackSelect>
               </label>
-              {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
+              {errorMessage && (
+                <p className={styles.errorMessage}>{errorMessage}</p>
+              )}
               <HackButton type="submit">Продолжить</HackButton>
             </form>
           </div>
