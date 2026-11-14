@@ -1,12 +1,15 @@
 import { useAuth } from "../context/AuthContext";
 import { Navigate } from "react-router-dom";
 import { type ReactNode } from "react";
+import { useProfileStore } from "../../stores/profileStore";
+import { Loader } from "../../shared/components/UI/Loader";
 
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user , isAuthLoading } = useAuth();
+  const { isAuthLoading } = useAuth();
+  const user = useProfileStore((state) => state.user);
   if (isAuthLoading) {
-    return <div>Loading...</div>;
+    return <Loader />;
   }
   if (!user) {
     return <Navigate to="/auth/login" replace/>;

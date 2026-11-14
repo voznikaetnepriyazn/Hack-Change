@@ -1,40 +1,45 @@
+import styles from "./index.module.css";
 import { useState, type ComponentProps } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ApiError from "../../../shared/errors/ApiError";
 import { useAuth } from "../../context/AuthContext";
 import image1 from "../../../assets/images/cloud-text.png";
 import { IconLogo } from "../../../shared/components/icons/IconLogo";
-import styles from "./index.module.css";
 import { HackSelect } from "../../../shared/components/UI/HackSelect";
 import { HackInput } from "../../../shared/components/UI/HackInput";
 import { HackButton } from "../../../shared/components/UI/HackButton";
 import { BrandName } from "../../../shared/components/BrandName";
 
 export const LoginPage = () => {
-  const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [position, setPosition] = useState("");
 
-  const { login } = useAuth();
+  const [login, setLogin] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("");
+
+  const { login: loginUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit: NonNullable<ComponentProps<"form">["onSubmit"]> = async (
     e,
   ) => {
     e.preventDefault();
-    console.log(password, username, position);
-    setTimeout(() => {
+    
+    console.log(password, login, role);
+    setErrorMessage(null);
+    
+    try {
+      await loginUser(login, password);
       setPassword("");
-      setUsername("");
-      setPosition("");
+      setLogin("");
+      setRole("");
       navigate("/account");
-    }, 500);
+    } catch{
+        setErrorMessage("Введены неверные данные");
+    }
     // setErrorMessage(null);
     // try {
-    //   await login(email, password);
+    //   await login(login, password);
     //   navigate("/account");
     // } catch (error) {
     //   if (error instanceof ApiError) {
@@ -80,8 +85,8 @@ export const LoginPage = () => {
                   name="login"
                   required
                   placeholder="@username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
                 />
               </label>
               <label>
@@ -98,16 +103,17 @@ export const LoginPage = () => {
               <label>
                 <span>Должность</span>
                 <HackSelect
-                  name="position"
+                  name="role"
                   required
-                  value={position}
-                  onChange={(e) => setPosition(e.target.value)}
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
                 >
                   <option value="">Выберите должность</option>
                   <option value="intern">Стажер</option>
                   <option value="lead">Руководитель</option>
                 </HackSelect>
               </label>
+              {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
               <HackButton type="submit">Продолжить</HackButton>
             </form>
           </div>

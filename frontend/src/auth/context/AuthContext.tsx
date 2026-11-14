@@ -1,14 +1,17 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { loginUser, logoutUser, refreshUserToken } from "../api/auth.api";
-import { type AuthUser } from "../types/auth.types";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { loginUser, logoutUser } from "../api/auth.api";
+import { getCurrentUser } from "../../account/api/account.api";
+import { useProfileStore } from "../../stores/profileStore";
 
 export interface AuthContextType {
-  user: AuthUser | null;
-  accessToken: string | null;
   isAuthLoading: boolean;
-  updateAccessToken: (token: string) => void;
-  refreshAccessToken: () => Promise<string>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -17,64 +20,51 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === null) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const setProfileUser = useProfileStore((state) => state.setProfileUser);
 
-  const login = async (email: string, password: string) => {
-    const response = await loginUser(email, password);
-    setUser(response.user);
-    setAccessToken(response.accessToken);
+  const login = async (login: string, password: string) => {
+    // const data = await loginUser(login, password);
+    // if(data) {
+    const userProfile = await getCurrentUser();
+    console.log("Введенные данные:", login, password);
+
+    console.log("Полученный пользователь:", userProfile);
+    if (userProfile) {
+      setProfileUser(userProfile);
+    }
+    // }
   };
 
   const logout = async () => {
     await logoutUser();
-    setUser(null);
-    setAccessToken(null);
-  };
-
-  const updateAccessToken = (token: string) => {
-    setAccessToken(token);
-  };
-
-  const refreshAccessToken = async (): Promise<string> => {
-    try {
-      const response = await refreshUserToken();
-    
-      setUser(response.user);
-      setAccessToken(response.accessToken);
-    
-      return response.accessToken;
-    } catch (error) {
-      setUser(null);
-      setAccessToken(null);
-      throw error;
-    } 
+    setProfileUser(null);
   };
 
   useEffect(() => {
     const restoreAuth = async () => {
       try {
-        const response = await refreshUserToken();
-  
-        setUser(response.user);
-        setAccessToken(response.accessToken);
+        const userProfile = await getCurrentUser();
+        setProfileUser(userProfile);
       } catch {
-        setUser(null);
-        setAccessToken(null);
+        setProfileUser(null);
       } finally {
         setIsAuthLoading(false);
       }
     };
-  
+
     restoreAuth();
   }, []);
 
-  return <AuthContext.Provider value={{ user, accessToken, isAuthLoading, login, logout, updateAccessToken, refreshAccessToken }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ isAuthLoading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

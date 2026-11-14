@@ -20,8 +20,8 @@ export const isCurrentUserResponse = (
   return (
     'id' in user &&
     typeof user.id === 'number' &&
-    'email' in user &&
-    typeof user.email === 'string' &&
+    'login' in user &&
+    typeof user.login === 'string' &&
     'createdAt' in user &&
     typeof user.createdAt === 'string' &&
     'updatedAt' in user &&

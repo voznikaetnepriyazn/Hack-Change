@@ -10,6 +10,7 @@ import { QuestionsPage } from "../account/pages/QuestionsPage";
 import { ProfilePage } from "../account/pages/ProfilePage";
 import { DocumentsPage } from "../account/pages/DocumentsPage";
 import { TasksPage } from "../account/pages/TasksPage";
+import { InternPage } from "../account/pages/InternPage";
 
 const routes: RouteObject[] = [
   {
@@ -49,6 +50,10 @@ const routes: RouteObject[] = [
           {
             path: "tasks",
             element: <TasksPage />,
+          },
+          {
+            path: "intern",
+            element: <InternPage />,
           },
           {
             path: "profile",

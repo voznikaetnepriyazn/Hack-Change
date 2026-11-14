@@ -1,16 +1,34 @@
-import { AuthUser } from "../../auth/types/auth.types";
+import { AuthUser, UserRole } from "../../auth/types/auth.types";
+
+interface GitHubProfile {
+  login: string;
+  username: string;
+}
+
+interface Requests {
+  id: string;
+  name: string;
+  description: string;
+  status: "pending" | "approved" | "rejected";
+}
 
 export interface User {
-  id: number;
+  id: string;
   name: string;
   avatar: string | null;
   position: string;
-  department: string;
   phone?: string;
   login: string;
-  role: "intern" | "leader";
-  vacationStart: Date;
-  vacationEnd: Date;
+  command: string;
+  post: string;
+  formatWork: string;
+  office: string;
+  statusVacation?: string;
+  githubProfile?: GitHubProfile | null;
+  requests?: Requests[];
+  role: UserRole;
+  vacationStart?: Date | null;
+  vacationEnd?: Date | null;
 }
 
 export interface CurrentUserResponse {

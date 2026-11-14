@@ -8,31 +8,44 @@ import { IconAim } from "../../../shared/components/icons/IconAim";
 import { IconQuestion } from "../../../shared/components/icons/IconQuestion";
 import { IconDocuments } from "../../../shared/components/icons/IconDocuments";
 import { IconArrow } from "../../../shared/components/icons/IconArrow";
+import { IconStudent } from "../../../shared/components/icons/IconStudent";
+import { useProfileStore } from "../../../stores/profileStore";
 
 const links = [
   {
     to: "/account/chat",
     label: "Чат с AI-BUDDY",
     icon: <IconChat />,
+    whoLook: "all",
   },
   {
     to: "/account/tasks",
     label: "Задачи",
     icon: <IconAim />,
+    whoLook: "intern",
   },
   {
     to: "/account/questions",
     label: "Частые вопросы",
     icon: <IconQuestion />,
+    whoLook: "intern",
+  },
+  {
+    to: "/account/intern",
+    label: "Мой стажер",
+    icon: <IconStudent />,
+    whoLook: "lead",
   },
   {
     to: "/account/documents",
     label: "Документы",
     icon: <IconDocuments />,
+    whoLook: "all",
   },
 ];
 export const AccountMenu = () => {
-  const [isShort, setIsShort] = useState(false);  
+  const [isShort, setIsShort] = useState(false);
+  const user = useProfileStore((state) => state.user);
   const toggleMenu = () => {
     setIsShort(!isShort);
   };
@@ -40,11 +53,16 @@ export const AccountMenu = () => {
   return (
     <aside className={`${styles.sidebar} ${isShort ? styles.short : ""}`}>
       <div className={styles.top}>
-        {isShort ? '' : <BrandName />}
-        <IconArrow className={`${styles.arrow} ${isShort ? styles.short : ""}`} onClick={toggleMenu} />
+        <div className={`${styles.brand} ${isShort ? styles.hidden : ""}`}>
+          <BrandName />
+        </div>
+        <IconArrow
+          className={`${styles.arrow} ${isShort ? styles.short : ""}`}
+          onClick={toggleMenu}
+        />
       </div>
-      <nav className={`${styles.menu} ${isShort ? styles.short : ""}`}>
-        {links.map((link) => (
+      <nav className={styles.menu}>
+        {links.filter((link) => link.whoLook === user?.role || link.whoLook === "all").map((link) => (
           <NavLink
             to={link.to}
             key={link.to}
@@ -53,12 +71,16 @@ export const AccountMenu = () => {
             }
           >
             {link.icon}
-            { isShort ? '' : link.label}
+            <span
+              className={`${styles.linkText} ${isShort ? styles.hidden : ""}`}
+            >
+              {link.label}
+            </span>
           </NavLink>
         ))}
       </nav>
-      <NavLink to="/account/profile" className={styles.botom}>
-        <ProfileItem isShort={isShort} />
+      <NavLink to="/account/profile" className={styles.bottom}>
+        <ProfileItem isShort={isShort} user={user} />
       </NavLink>
     </aside>
   );

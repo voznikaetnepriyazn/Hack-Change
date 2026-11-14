@@ -5,17 +5,63 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  flex-shrink: 0;
+
+  box-sizing: border-box;
+  flex: 0 0 395px;
+  width: 395px;
+
   padding: 80px 20px 80px 60px;
-  max-width: 395px;
-  width: 100%;
   border-right: 1px solid rgba(0, 0, 0, 0.25);
-  transition: all 0.3s ease-out;
+
+  transition:
+    width 0.3s ease,
+    flex-basis 0.3s ease,
+    padding 0.3s ease;
 }
 
 .sidebar.short {
-  max-width: 167px;
-  padding-right: 52px;
+  flex-basis: 167px;
+  width: 167px;
+  padding-right: 20px;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 0;
+}
+.sidebar.short .top {
+  justify-content: center;
+}
+
+.brand {
+  max-width: 250px;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+
+  transition:
+    max-width 0.3s ease,
+    opacity 0.2s ease;
+}
+
+.brand.hidden {
+  max-width: 0;
+  opacity: 0;
+}
+
+.arrow {
+  flex-shrink: 0;
+  width: 24px;
+  height: fit-content;
+  transform: rotateY(180deg);
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.arrow.short {
+  transform: rotateY(0deg);
 }
 
 .menu {
@@ -25,52 +71,60 @@
   gap: 16px;
 }
 
-.menu.short {
-  gap: 16px;
-}
-
-
 .link {
   display: flex;
   align-items: center;
   padding: 15px 10px;
   gap: 16px;
+
+  box-sizing: border-box;
   max-width: 315px;
   width: 100%;
   height: 62px;
+
   border-radius: 15px;
   font-weight: 400;
   font-size: 24px;
-  line-height: calc(29/24 * 100%);
+  line-height: calc(29 / 24 * 100%);
   color: #000000;
+
+  white-space: nowrap;
+  overflow: hidden;
+
+  transition:
+    max-width 0.3s ease,
+    background-color 0.2s ease;
 }
 
 .link.short {
   max-width: 52px;
 }
 
+.link svg {
+  flex-shrink: 0;
+}
+
 .link.active {
   background: #F0F0F0;
 }
 
-.top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.linkText {
+  display: block;
+  max-width: 230px;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+
+  transition:
+    max-width 0.3s ease,
+    opacity 0.15s ease;
 }
 
-.arrow {
-  width: 24px;
-  height: fit-content;
-  transform: rotateY(180deg);
-  cursor: pointer;
+.linkText.hidden {
+  max-width: 0;
+  opacity: 0;
 }
 
-.arrow.short {
-  transform: rotateY(0deg);
-  margin: 0 auto;
-}
-
-.botom {
+.bottom {
   margin-top: auto;
 }

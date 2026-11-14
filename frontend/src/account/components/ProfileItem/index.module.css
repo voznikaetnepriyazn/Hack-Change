@@ -9,7 +9,6 @@
 .profile.short {
   max-width: 75px;
   gap: 0;
-  display: block;
 }
 
 .avatar {
@@ -38,16 +37,30 @@
   gap: 16px;
   font-weight: 400;
   font-size: 24px;
+
+  max-width: 200px;
+  overflow: hidden;
+  opacity: 1;
+  white-space: nowrap;
+
+  transition:
+    max-width 0.3s ease,
+    opacity 0.15s ease;
+}
+
+.right.hidden {
+  max-width: 0;
+  opacity: 0;
 }
 
 .name {
   color: #000000;
-  line-height: 17px;
+  line-height: 1;
 }
 
 .position {
   color: rgba(0, 0, 0, 0.5);
-  line-height: 17px;
+  line-height: 1;
 }
 
 .profile.large {
@@ -60,7 +73,8 @@
 }
 
 .profile.large .right {
-  gap: 32px;
+  gap: 26px;
+  max-width: none;
 }
 
 .profile.large .name {
@@ -71,4 +85,28 @@
 .profile.large .position {
   color: #000000;
   line-height: calc(29 / 24*100%);
+}
+
+.bottom {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bottom span {
+  display: inline-flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 24px;
+  line-height: 1;
+  color: #000000;
+  font-weight: 400;
+}
+
+.bottom span:nth-child(n + 2)::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 50%;
 }

@@ -1,0 +1,144 @@
+
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(45, 91, 145, 0.2) 0%,
+      transparent 40%
+    ),
+    linear-gradient(135deg, #080e19 0%, #101b2c 55%, #080e19 100%);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.logo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  margin-bottom: 8px;
+}
+
+.ring {
+  position: absolute;
+  inset: 0;
+  border: 2px solid transparent;
+  border-top-color: #55b7ff;
+  border-right-color: rgba(85, 183, 255, 0.35);
+  border-radius: 50%;
+  animation: rotate 1.2s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(85, 183, 255, 0.7));
+}
+
+.ringInner {
+  position: absolute;
+  inset: 11px;
+  border: 2px solid transparent;
+  border-bottom-color: #8b70ff;
+  border-left-color: rgba(139, 112, 255, 0.4);
+  border-radius: 50%;
+  animation: rotateReverse 1.8s linear infinite;
+}
+
+.dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #55b7ff;
+  box-shadow:
+    0 0 12px #55b7ff,
+    0 0 28px rgba(85, 183, 255, 0.7);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.title {
+  margin: 0;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 4px;
+}
+
+.message {
+  margin: 0;
+  color: #a7b7ca;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+.progress {
+  width: 150px;
+  height: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.progress span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8b70ff, #55b7ff);
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotateReverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(370%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
