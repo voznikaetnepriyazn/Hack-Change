@@ -24,9 +24,9 @@ import (
 )
 
 const (
-	defaultDataDir      = "agent/tools/data"
-	defaultChunkSize    = 1000
-	defaultChunkOverlap = 150
+	defaultDataDir      = "agent/tools/data/synthetic"
+	defaultChunkSize    = 800
+	defaultChunkOverlap = 110
 )
 
 type documentPipeline interface {
