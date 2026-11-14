@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import styles from "./index.module.css";
 import { useTasksStore } from "../../../stores/tasksStore";
 import { QuestionBlock } from "../../components/QuestionBlock";

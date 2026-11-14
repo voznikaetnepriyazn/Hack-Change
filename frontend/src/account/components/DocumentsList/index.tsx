@@ -1,5 +1,4 @@
 import styles from "./index.module.css";
-import { useState } from "react";
 import { DocumentItem } from "../DocumentItem";
 import { Document } from "../../types/account.types";
 

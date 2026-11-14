@@ -9,7 +9,7 @@ interface DocumentsState {
   description: string;
 }
 
-export const useDocumentsStore = create<DocumentsState>((set) => ({
+export const useDocumentsStore = create<DocumentsState>(() => ({
   title: "Документы",
   description: "Инструкции, материалы и полезные ссылки для стажёров.",
   tags: [

@@ -5,13 +5,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { loginUser, logoutUser } from "../api/auth.api";
+import { logoutUser } from "../api/auth.api";
+// import { loginUser, logoutUser } from "../api/auth.api";
 import { getCurrentUser } from "../../account/api/account.api";
 import { useProfileStore } from "../../stores/profileStore";
 
 export interface AuthContextType {
   isAuthLoading: boolean;
-  login: (login: string, password: string) => Promise<void>;
+  // login: (login: string, password: string) => Promise<void>;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -29,13 +31,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const setProfileUser = useProfileStore((state) => state.setProfileUser);
 
-  const login = async (login: string, password: string) => {
+  // const login = async (login: string, password: string) => {
+  const login = async () => {
     // const data = await loginUser(login, password);
     // if(data) {
     const userProfile = await getCurrentUser();
-    console.log("Введенные данные:", login, password);
 
-    console.log("Полученный пользователь:", userProfile);
     if (userProfile) {
       setProfileUser(userProfile);
     }
