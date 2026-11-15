@@ -68,3 +68,15 @@ export interface ContentBlock {
   title: string;
   description: string;
 }
+
+
+export interface Teammate {
+  id: string;
+  name: string;
+  avatar: string;
+  email: string;
+  position: string;
+  phone?: string;
+  login: string;
+  role: UserRole;
+}

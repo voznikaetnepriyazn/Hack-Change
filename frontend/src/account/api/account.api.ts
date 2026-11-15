@@ -73,20 +73,20 @@ const intern1: User = {
     },
   ],
 };
-// const lead: User = {
-//   id: "3",
-//   avatar:
-//     "https://thumb.wikimedia.org/wikipedia/ru/thumb/0/0f/Tom_Holland_as_Spider-Man.jpg/330px-Tom_Holland_as_Spider-Man.jpg?utm_source=ru.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
-//   name: "Иван Иванов",
-//   position: "Руководитель",
-//   phone: "+7 (999) 999-99-98",
-//   login: "@ivan",
-//   role: "lead" as const,
-//   command: "Команда 1",
-//   post: "Должность",
-//   formatWork: "Гибрид, 40 ч/нед",
-//   office: "Москва",
-// };
+const lead: User = {
+  id: "3",
+  avatar:
+    "https://thumb.wikimedia.org/wikipedia/ru/thumb/0/0f/Tom_Holland_as_Spider-Man.jpg/330px-Tom_Holland_as_Spider-Man.jpg?utm_source=ru.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+  name: "Иван Иванов",
+  position: "Руководитель",
+  phone: "+7 (999) 999-99-98",
+  login: "@ivan",
+  role: "lead" as const,
+  command: "Команда 1",
+  post: "Должность",
+  formatWork: "Гибрид, 40 ч/нед",
+  office: "Москва",
+};
 
 export const getCurrentUser = async () => {
   // const data: unknown = await apiRequest('api/users/me', {
@@ -97,7 +97,7 @@ export const getCurrentUser = async () => {
     user: null as User | null,
   };
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  data.user = intern1;
+  data.user = lead;
 
   // if (!isCurrentUserResponse(data)) {
   //   throw new ApiError("Invalid response format", 400);

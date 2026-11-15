@@ -7,6 +7,7 @@ import { IconTeam } from "../../../shared/components/icons/IconTeam";
 import { IconArrow } from "../../../shared/components/icons/IconArrow";
 import { IconSend } from "../../../shared/components/icons/IconSend";
 
+
 const buttons = [
   {
     icon: <IconRocket />,
@@ -28,6 +29,7 @@ const buttons = [
 
 interface Message {
   text: string;
+  role?: "user" | "bot";
 }
 
 export const ChatPage = () => {
@@ -37,14 +39,29 @@ export const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const chatRef = useRef<HTMLDivElement>(null);
 
+  const createRandomMessage = () => {
+    const message = Math.random().toString(36).substring(2, 15);
+    setMessages((prev) => [...prev, { text: message, role: "bot" }]);
+  };
+
+  const getMessageBtnCommand = (text: string) => {
+    
+
+    setQuestion(text);
+  }
+
 
   const handleQuestionSubmit = () => {
     const text = question.trim();
   
     if (!text) return;
   
-    setMessages((prev) => [...prev, { text }]);
+    setMessages((prev) => [...prev, { text, role: "user" }]);
     setQuestion("");
+
+    setTimeout(() => {
+      createRandomMessage();
+    }, 1500);
   };
 
   useEffect(() => {
@@ -70,7 +87,7 @@ export const ChatPage = () => {
               type="button"
               key={button.label}
               className={styles.button}
-              onClick={() => setQuestion(button.label)}
+              onClick={() => getMessageBtnCommand(button.label)}
             >
               {button.icon}
               <p className={styles.button__label}>{button.label}</p>
@@ -82,7 +99,7 @@ export const ChatPage = () => {
         {messages.length > 0 && (
           <div className={styles.messages}>
             {messages.map((message, index) => (
-              <div key={index} className={styles.message}>
+              <div key={index} className={`${styles.message} ${message.role === "user" ? styles.user : styles.bot}`}>
                 <p className={styles.message__text}>{message.text}</p>
               </div>
             ))}
