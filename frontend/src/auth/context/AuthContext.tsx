@@ -7,6 +7,7 @@ import {
 } from "react";
 import { logoutUser, loginUser } from "../api/auth.api";
 import { getCurrentUser } from "../../account/api/account.api";
+import { clearSessionChat } from "../../account/chat/sessionChat";
 import { useProfileStore } from "../../stores/profileStore";
 
 export interface AuthContextType {
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (login: string, password: string) => {
     try {
       const data = await loginUser(login, password);
+      clearSessionChat();
       if (data) {
         const { user } = data;
         const userProfile = await getCurrentUser(user.role);
@@ -46,6 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await logoutUser();
+    clearSessionChat();
     setProfileUser(null);
   };
 
@@ -55,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userProfile = await getCurrentUser();
         setProfileUser(userProfile);
       } catch {
+        clearSessionChat();
         setProfileUser(null);
       } finally {
         setIsAuthLoading(false);

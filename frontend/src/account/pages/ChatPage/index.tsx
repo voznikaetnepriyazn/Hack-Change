@@ -1,7 +1,9 @@
 import styles from "./index.module.css";
 import { useEffect, useRef, useState } from "react";
 import { streamChat } from "../../api/account.api";
+import { loadSessionChat, saveSessionChat, clearSessionChat } from "../../chat/sessionChat";
 import { useProfileStore } from "../../../stores/profileStore";
+import ApiError from "../../../shared/errors/ApiError";
 import { IconRocket } from "../../../shared/components/icons/IconRocket";
 import { IconQuestionCircle } from "../../../shared/components/icons/IconQuestionCircle";
 import { IconInfo } from "../../../shared/components/icons/IconInfo";
@@ -36,9 +38,12 @@ interface Message {
 
 export const ChatPage = () => {
   const user = useProfileStore((state) => state.user);
+  const setProfileUser = useProfileStore((state) => state.setProfileUser);
 
   const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    user?.role === "intern" ? loadSessionChat() : [],
+  );
   const [isStreaming, setIsStreaming] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -88,6 +93,12 @@ export const ChatPage = () => {
       onError: (error) => {
         setIsStreaming(false);
         stopStreamRef.current = null;
+        if (error instanceof ApiError && error.statusCode === 401) {
+          clearSessionChat();
+          setMessages([]);
+          setProfileUser(null);
+          return;
+        }
         setMessages((prev) => {
           const next = [...prev];
           const last = next[next.length - 1];
@@ -108,6 +119,14 @@ export const ChatPage = () => {
       stopStreamRef.current?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (user?.role !== "intern") {
+      return;
+    }
+
+    saveSessionChat(messages);
+  }, [messages, user]);
 
   useEffect(() => {
     if (chatRef.current) {

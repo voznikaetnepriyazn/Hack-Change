@@ -87,7 +87,7 @@ const lead: User = {
   office: "Москва",
 };
 
-export const getCurrentUser = async (role: string) => {
+export const getCurrentUser = async (role?: string) => {
   const data = {
     user: null as User | null,
   };
