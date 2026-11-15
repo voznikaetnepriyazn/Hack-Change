@@ -1,10 +1,12 @@
 package session
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -93,6 +95,131 @@ func TestMessagesReturnsIndependentCopy(t *testing.T) {
 	}
 	if got := s.Messages(); !reflect.DeepEqual(got, want) {
 		t.Errorf("session history changed through returned copy: got %#v, want %#v", got, want)
+	}
+}
+
+func TestMessagesDeepCopiesNestedFields(t *testing.T) {
+	index := 1
+	original := openai.ChatCompletionMessage{
+		Role: openai.ChatMessageRoleAssistant,
+		FunctionCall: &openai.FunctionCall{
+			Name:      "original-function",
+			Arguments: `{"value":1}`,
+		},
+		ToolCalls: []openai.ToolCall{{
+			Index: &index,
+			Function: openai.FunctionCall{
+				Name:      "original-tool",
+				Arguments: `{"value":2}`,
+			},
+		}},
+		MultiContent: []openai.ChatMessagePart{{
+			Type:     openai.ChatMessagePartTypeImageURL,
+			ImageURL: &openai.ChatMessageImageURL{URL: "https://example.test/original"},
+		}},
+	}
+	s := NewSession("system")
+	s.AddMessage(original)
+
+	original.FunctionCall.Name = "changed-after-add"
+	original.ToolCalls[0].Function.Name = "changed-after-add"
+	*original.ToolCalls[0].Index = 99
+	original.MultiContent[0].ImageURL.URL = "https://example.test/changed-after-add"
+
+	got := s.Messages()[1]
+	if got.FunctionCall.Name != "original-function" ||
+		got.ToolCalls[0].Function.Name != "original-tool" ||
+		*got.ToolCalls[0].Index != 1 ||
+		got.MultiContent[0].ImageURL.URL != "https://example.test/original" {
+		t.Fatalf("AddMessage() retained caller-owned nested data: %#v", got)
+	}
+
+	got.FunctionCall.Name = "changed-returned-copy"
+	got.ToolCalls[0].Function.Name = "changed-returned-copy"
+	*got.ToolCalls[0].Index = 100
+	got.MultiContent[0].ImageURL.URL = "https://example.test/changed-returned-copy"
+
+	stored := s.Messages()[1]
+	if stored.FunctionCall.Name != "original-function" ||
+		stored.ToolCalls[0].Function.Name != "original-tool" ||
+		*stored.ToolCalls[0].Index != 1 ||
+		stored.MultiContent[0].ImageURL.URL != "https://example.test/original" {
+		t.Fatalf("Messages() exposed nested session-owned data: %#v", stored)
+	}
+}
+
+func TestLockTurnSerializesTurnOwnership(t *testing.T) {
+	s := NewSession("system")
+	unlockFirst, err := s.LockTurn(context.Background())
+	if err != nil {
+		t.Fatalf("LockTurn() for first turn returned unexpected error: %v", err)
+	}
+	defer func() { unlockFirst() }()
+
+	type lockResult struct {
+		unlock func()
+		err    error
+	}
+	acquiredSecond := make(chan lockResult, 1)
+	go func() {
+		unlock, err := s.LockTurn(context.Background())
+		acquiredSecond <- lockResult{unlock: unlock, err: err}
+	}()
+
+	select {
+	case result := <-acquiredSecond:
+		if result.unlock != nil {
+			result.unlock()
+		}
+		t.Fatal("second turn acquired the lock while the first turn was active")
+	case <-time.After(25 * time.Millisecond):
+	}
+
+	unlockFirst()
+	unlockFirst = func() {}
+
+	select {
+	case result := <-acquiredSecond:
+		if result.err != nil {
+			t.Fatalf("LockTurn() for second turn returned unexpected error: %v", result.err)
+		}
+		result.unlock()
+	case <-time.After(time.Second):
+		t.Fatal("second turn did not acquire the lock after the first turn ended")
+	}
+}
+
+func TestLockTurnHonorsCanceledContextWhileWaiting(t *testing.T) {
+	s := NewSession("system")
+	unlock, err := s.LockTurn(context.Background())
+	if err != nil {
+		t.Fatalf("LockTurn() returned unexpected error: %v", err)
+	}
+	defer unlock()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	type lockResult struct {
+		unlock func()
+		err    error
+	}
+	resultCh := make(chan lockResult, 1)
+	go func() {
+		unlock, err := s.LockTurn(ctx)
+		resultCh <- lockResult{unlock: unlock, err: err}
+	}()
+
+	cancel()
+	select {
+	case result := <-resultCh:
+		if result.unlock != nil {
+			result.unlock()
+		}
+		if result.err != context.Canceled {
+			t.Errorf("LockTurn() error = %v, want %v", result.err, context.Canceled)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("LockTurn() did not return after its context was canceled")
 	}
 }
 

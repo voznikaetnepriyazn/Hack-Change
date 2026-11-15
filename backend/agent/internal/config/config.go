@@ -10,25 +10,48 @@ import (
 	tool "github.com/voznikaetnepriyazn/Hack-Change/agent/tools"
 )
 
-// Limits of one agent step.
+// Limits bounds one complete agent run and the work within each iteration.
 type Limits struct {
-	MaxIterations   int
-	Deadline        time.Duration
-	LLMTimeout      time.Duration
+	MaxIterations int
+	// Deadline bounds the complete run, including waiting for the session and tool execution.
+	// A zero value disables the overall deadline; a negative value uses the default.
+	Deadline time.Duration
+	// LLMTimeout bounds each individual LLM request.
+	LLMTimeout time.Duration
+	// ToolConcurrency is the maximum number of parallel read-only tools.
 	ToolConcurrency int
 }
 
-// DefaultLimits limit by default.
+// DefaultLimits returns the default run and request limits.
 func DefaultLimits() Limits {
 	return Limits{
 		MaxIterations:   20,
 		Deadline:        5 * time.Minute,
 		LLMTimeout:      240 * time.Second,
-		ToolConcurrency: 3,
+		ToolConcurrency: tool.DefaultToolConcurrency,
 	}
 }
 
-// AgentConfig - one agent configuration.
+// WithDefaults replaces unset iteration, LLM timeout, and tool concurrency values
+// with defaults. A zero Deadline intentionally means no overall deadline.
+func (l Limits) WithDefaults() Limits {
+	defaults := DefaultLimits()
+	if l.MaxIterations <= 0 {
+		l.MaxIterations = defaults.MaxIterations
+	}
+	if l.Deadline < 0 {
+		l.Deadline = defaults.Deadline
+	}
+	if l.LLMTimeout <= 0 {
+		l.LLMTimeout = defaults.LLMTimeout
+	}
+	if l.ToolConcurrency <= 0 {
+		l.ToolConcurrency = defaults.ToolConcurrency
+	}
+	return l
+}
+
+// AgentConfig contains dependencies and per-run settings for the agent.
 type AgentConfig struct {
 	// dependencies
 	Client       *openai.Client
