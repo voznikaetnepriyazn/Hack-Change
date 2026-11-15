@@ -1,14 +1,14 @@
 import { create } from "zustand";
 import { ContentBlock, Document, Tag } from "../account/types/account.types";
-import teamContactsUrl from "../assets/documents/team_alpha_contacts.md?url";
-import teamProcessesUrl from "../assets/documents/team_alpha_processes.md?url";
-import teamEnvironmentUrl from "../assets/documents/team_alpha_environment.md?url";
-import officeUrl from "../assets/documents/office_and_infrastructure.md?url";
-import vacationUrl from "../assets/documents/vacation_and_dayoff_rules.md?url";
-import healthUrl from "../assets/documents/health_and_sick_leave.md?url";
-import financeUrl from "../assets/documents/finance_and_documents.md?url";
-import careerUrl from "../assets/documents/career_and_grades.md?url";
-import corporateLifeUrl from "../assets/documents/corporate_life_and_events.md?url";
+import teamContactsUrl from "../assets/documents/team_alpha_contacts.txt";
+import teamProcessesUrl from "../assets/documents/team_alpha_processes.txt";
+import teamEnvironmentUrl from "../assets/documents/team_alpha_environment.txt";
+import officeUrl from "../assets/documents/office_and_infrastructure.txt";
+import vacationUrl from "../assets/documents/vacation_and_dayoff_rules.txt";
+import healthUrl from "../assets/documents/health_and_sick_leave.txt";
+import financeUrl from "../assets/documents/finance_and_documents.txt";
+import careerUrl from "../assets/documents/career_and_grades.txt";
+import corporateLifeUrl from "../assets/documents/corporate_life_and_events.txt";
 
 interface DocumentsState {
   documents: Document[];
