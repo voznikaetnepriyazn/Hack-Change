@@ -9,8 +9,10 @@ import { AccountLayout } from "../account/pages/AccountLayout";
 import { QuestionsPage } from "../account/pages/QuestionsPage";
 import { ProfilePage } from "../account/pages/ProfilePage";
 import { DocumentsPage } from "../account/pages/DocumentsPage";
+import { DocumentPage } from "../account/pages/DocumentPage";
 import { TasksPage } from "../account/pages/TasksPage";
 import { InternPage } from "../account/pages/InternPage";
+
 
 const routes: RouteObject[] = [
   {
@@ -45,6 +47,10 @@ const routes: RouteObject[] = [
           {
             path: "documents",
             element: <DocumentsPage />,
+          },
+          {
+            path: "documents/:documentId",
+            element: <DocumentPage />,
           },
           {
             path: "tasks",
