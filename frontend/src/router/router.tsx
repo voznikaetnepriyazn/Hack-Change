@@ -12,6 +12,8 @@ import { DocumentsPage } from "../account/pages/DocumentsPage";
 import { DocumentPage } from "../account/pages/DocumentPage";
 import { TasksPage } from "../account/pages/TasksPage";
 import { InternPage } from "../account/pages/InternPage";
+import { AccountIndexRedirect } from "../auth/components/AccountIndexRedirect";
+
 
 
 const routes: RouteObject[] = [
@@ -34,7 +36,7 @@ const routes: RouteObject[] = [
         children: [
           {
             index: true,
-            element: <Navigate to="chat" replace />,
+            element: <AccountIndexRedirect />,
           },
           {
             path: "chat",

@@ -92,7 +92,8 @@ export const getCurrentUser = async (role?: string) => {
     user: null as User | null,
   };
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  data.user = role === "lead" ? lead : intern;
+  // data.user = role === "lead" ? lead : intern;
+  data.user = lead;
 
   if (!isCurrentUserResponse(data)) {
     throw new ApiError("Invalid response format", 400);
