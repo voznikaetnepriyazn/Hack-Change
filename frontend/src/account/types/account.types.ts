@@ -70,6 +70,7 @@ export interface Document {
 
 export interface Task {
   id: number;
+  code: string;
   title: string;
   description: string;
   status: "active" | "completed";

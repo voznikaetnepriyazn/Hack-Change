@@ -74,17 +74,17 @@ describe("account pages", () => {
 
     expect(screen.getByRole("heading", { name: "Задачи" })).toBeInTheDocument();
     fireEvent.click(screen.getByText("Активные"));
-    expect(screen.getByText("Задача 1")).toBeInTheDocument();
-    expect(screen.queryByText("Задача 2")).not.toBeInTheDocument();
+    expect(screen.getByText("Настроить локальное окружение")).toBeInTheDocument();
+    expect(screen.queryByText("Написать API-эндпоинт для получения статуса заявки")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText("Поиск по задачам..."), {
-      target: { value: "Задача 5" },
+      target: { value: "Grafana" },
     });
-    expect(screen.getByText("Задача 5")).toBeInTheDocument();
-    expect(screen.queryByText("Задача 1")).not.toBeInTheDocument();
+    expect(screen.getByText("Получить доступ к логам в Grafana")).toBeInTheDocument();
+    expect(screen.queryByText("Настроить локальное окружение")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Завершённые"));
-    expect(screen.queryByText("Задача 5")).not.toBeInTheDocument();
+    expect(screen.queryByText("Получить доступ к логам в Grafana")).not.toBeInTheDocument();
   });
 
   it("shows the intern profile, a lead profile and a missing user", () => {

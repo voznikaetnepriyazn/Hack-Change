@@ -56,10 +56,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const restoreAuth = async () => {
       try {
-        // if (user) {
+        if (user) {
           const userProfile = await getCurrentUser();
           setProfileUser(userProfile);
-        // }
+        }
       } catch {
         clearSessionChat();
         setProfileUser(null);

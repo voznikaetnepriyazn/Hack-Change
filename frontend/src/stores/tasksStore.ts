@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { ContentBlock, Task, Tag } from "../account/types/account.types";
-
+import { parseTask } from "../shared/helpers/parseTask";
+import task1 from "../assets/tasks/task1.md?raw";
+import task2 from "../assets/tasks/task2.md?raw";
+import task3 from "../assets/tasks/task3.md?raw";
+import task4 from "../assets/tasks/task4.md?raw";
+import task5 from "../assets/tasks/task5.md?raw";
 
 interface TasksState {
   tasks: Task[];
@@ -11,6 +16,11 @@ interface TasksState {
   changeTaskStatus: (taskId: number) => void;
 }
 
+
+
+const tasks = [task1, task2, task3, task4, task5].map((markdown, index) =>
+  parseTask(index + 1, markdown),
+);
 
 export const useTasksStore = create<TasksState>((set) => ({
   title: "Задачи",
@@ -26,52 +36,16 @@ export const useTasksStore = create<TasksState>((set) => ({
       id: 1,
       name: "Активные",
       tab: "active",
-      items: [1, 2],
+      items: tasks.filter((task) => task.status === "active").map((task) => task.id),
     },
     {
       id: 2,
       name: "Завершённые",
       tab: "completed",
-      items: [4, 5],
+      items: tasks.filter((task) => task.status === "completed").map((task) => task.id),
     },
   ],
-  tasks: [
-    {
-      id: 1,
-      title: "Задача 1",
-      description: "Описание 1 Описание 1 Описание 1 Описание 1 Описание 1 Описание 1 Описание 1 Описание 1 Описание 1 Описание 1 Описание 1 Описание 1",
-      status: "active",
-      deadline: new Date(2026, 10, 12),
-    },
-    {
-      id: 2,
-      title: "Задача 2",
-      description: "Описание задачи 2",
-      status: "completed",
-      deadline: new Date(2026, 11, 15),
-    },
-    {
-      id: 3,
-      title: "Задача 3",
-      description: "Описание задачи 3",
-      status: "active",
-      deadline: new Date(2026, 11, 20),
-    },
-    {
-      id: 4,
-      title: "Задача 4",
-      description: "Описание задачи 4",
-      status: "completed",
-      deadline: new Date(2026, 10, 14),
-    },
-    {
-      id: 5,
-      title: "Задача 5",
-      description: "Описание задачи 5",
-      status: "active",
-      deadline: new Date(2026, 11, 26),
-    },
-  ],
+  tasks,
   contentBlock: {
     title: "Непонятна задача?",
     description: "Попросите AI Buddy помочь разобраться, составить план выполнения или подсказать, с чего начать.",

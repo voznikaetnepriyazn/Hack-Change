@@ -20,6 +20,7 @@ export const TasksList = ({ tasks, search }: TasksListProps) => {
   const filteredTasks = tasks.filter((task) => {  
     const matchesSearch = [
       task.title,
+      task.code,
       task.description,
     ].some((value) =>
       value.toLowerCase().includes(search.toLowerCase())
