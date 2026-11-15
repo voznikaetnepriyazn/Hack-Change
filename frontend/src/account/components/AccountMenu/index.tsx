@@ -16,7 +16,7 @@ const links = [
     to: "/account/chat",
     label: "Чат с AI-BUDDY",
     icon: <IconChat />,
-    whoLook: "all",
+    whoLook: "intern",
   },
   {
     to: "/account/tasks",
