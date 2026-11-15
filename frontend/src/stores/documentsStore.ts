@@ -1,5 +1,14 @@
 import { create } from "zustand";
 import { ContentBlock, Document, Tag } from "../account/types/account.types";
+import teamContactsUrl from "../assets/documents/team_alpha_contacts.md?url";
+import teamProcessesUrl from "../assets/documents/team_alpha_processes.md?url";
+import teamEnvironmentUrl from "../assets/documents/team_alpha_environment.md?url";
+import officeUrl from "../assets/documents/office_and_infrastructure.md?url";
+import vacationUrl from "../assets/documents/vacation_and_dayoff_rules.md?url";
+import healthUrl from "../assets/documents/health_and_sick_leave.md?url";
+import financeUrl from "../assets/documents/finance_and_documents.md?url";
+import careerUrl from "../assets/documents/career_and_grades.md?url";
+import corporateLifeUrl from "../assets/documents/corporate_life_and_events.md?url";
 
 interface DocumentsState {
   documents: Document[];
@@ -23,45 +32,75 @@ export const useDocumentsStore = create<DocumentsState>(() => ({
       id: 1,
       name: "Инструкции",
       tab: "instructions",
-      items: [1, 2],
+      items: [4, 5, 6, 7],
     },
     {
       id: 2,
       name: "Обучение",
       tab: "training",
-      items: [4, 5],
+      items: [8, 9],
+    },
+    {
+      id: 3,
+      name: "Команда",
+      tab: "team",
+      items: [1, 2, 3],
     },
   ],
   documents: [
     {
       id: 1,
-      title: "Памятка стажёра",
-      description: "Основная информация о начале стажировки",
-      link: "https://www.google.com",
+      title: "Контакты и роли команды Alpha",
+      description: "Кто за что отвечает и куда писать с вопросом",
+      link: teamContactsUrl,
     },
     {
       id: 2,
-      title: "Рабочие инструменты и доступы",
-      description: "Инструкция по подключению сервисов",
-      link: "https://www.google.com",
+      title: "Рабочие процессы команды Alpha",
+      description: "Встречи, разработка и релизы команды",
+      link: teamProcessesUrl,
     },
     {
       id: 3,
-      title: "Правила коммуникации",
-      description: "Как устроено взаимодействие в команде",
-      link: "https://www.google.com",
+      title: "Техническая среда и доступы команды Alpha",
+      description: "Настройка окружения, доступы и код-ревью",
+      link: teamEnvironmentUrl,
     },
     {
       id: 4,
-      title: "Полезные обучающие материалы",
-      description: "Подборка ссылок и внутренних ресурсов",
-      link: "https://www.google.com",
+      title: "Офис, удалёнка и рабочие инструменты",
+      description: "Как устроен офис, удалёнка и доступ к сервисам",
+      link: officeUrl,
     },
     {
       id: 5,
-      title: "Документ 5",
-      description: "Описание документа 5",
-      link: "https://www.google.com",
+      title: "Отпуска, отгулы и отсутствия",
+      description: "Как оформить отгул, отпуск и предупредить об отсутствии",
+      link: vacationUrl,
+    },
+    {
+      id: 6,
+      title: "Здоровье и больничные",
+      description: "Что делать, если заболел, и как оформляется больничный",
+      link: healthUrl,
+    },
+    {
+      id: 7,
+      title: "Финансы и документы",
+      description: "Договор, зарплата, реквизиты и выплаты",
+      link: financeUrl,
+    },
+    {
+      id: 8,
+      title: "Грейды, карьера и развитие",
+      description: "Линейка грейдов, повышение и обучение",
+      link: careerUrl,
+    },
+    {
+      id: 9,
+      title: "Корпоративная жизнь и мероприятия",
+      description: "Мероприятия, кружки и культура общения",
+      link: corporateLifeUrl,
     },
   ],
   contentBlock: {

@@ -114,14 +114,14 @@ describe("streamChat", () => {
 
     await vi.waitFor(() => expect(FakeEventSource.latest).not.toBeNull());
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/chat",
+      "http://localhost:8080/chat",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
         body: JSON.stringify({ message: "привет" }),
       }),
     );
-    expect(FakeEventSource.latest?.url).toBe("/api/stream");
+    expect(FakeEventSource.latest?.url).toBe("http://localhost:8080/stream");
     expect(FakeEventSource.latest?.init).toEqual({ withCredentials: true });
 
     FakeEventSource.latest?.emitMessage("");

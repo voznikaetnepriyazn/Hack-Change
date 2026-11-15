@@ -63,10 +63,10 @@ describe("account pages", () => {
     expect(screen.getByRole("heading", { name: "Документы" })).toBeInTheDocument();
     fireEvent.click(screen.getByText("Обучение"));
     fireEvent.change(screen.getByPlaceholderText("Поиск по документам..."), {
-      target: { value: "документ 5" },
+      target: { value: "грейд" },
     });
-    expect(screen.getByText("Документ 5")).toBeInTheDocument();
-    expect(screen.queryByText("Памятка стажёра")).not.toBeInTheDocument();
+    expect(screen.getByText("Грейды, карьера и развитие")).toBeInTheDocument();
+    expect(screen.queryByText("Отпуска, отгулы и отсутствия")).not.toBeInTheDocument();
   });
 
   it("filters tasks by status and search", () => {

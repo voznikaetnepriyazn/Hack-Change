@@ -24,7 +24,7 @@ describe("apiRequest", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/auth/login",
+      "http://localhost:8080/auth/login",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
@@ -50,7 +50,7 @@ describe("apiRequest", () => {
     await apiRequest("health", { credentials: "omit", headers: { "X-Test": "1" } });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/health",
+      "http://localhost:8080/health",
       expect.objectContaining({ credentials: "omit" }),
     );
   });

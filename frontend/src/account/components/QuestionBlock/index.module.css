@@ -26,10 +26,9 @@
 .button {
   padding: 10px 20px;
   height: 40px;
-  background: #000000;
   border-radius: 10px;
   font-weight: 400;
   font-size: 18px;
-  line-height: calc(22 / 18*100%);
+  line-height: 1;
   color: #FFFFFF;
 }

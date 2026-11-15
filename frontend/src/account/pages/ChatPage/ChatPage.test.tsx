@@ -63,9 +63,12 @@ describe("ChatPage", () => {
         {
           full_name: "Иванов Иван Иванович",
           position: "Backend Developer",
+          email: "i.ivanov@avito.ru",
+          responsibilities: "Ревью кода",
           office: "Москва",
         },
         {
+          avatar: "https://example.com/eva.jpg",
           first_name: "Ева",
           role: "Стажёр",
         },
@@ -78,10 +81,15 @@ describe("ChatPage", () => {
     ask("Кто в моей команде?");
 
     expect(screen.getByRole("heading", { name: "Иванов Иван Иванович" })).toBeInTheDocument();
+    expect(screen.getByText("И")).toBeInTheDocument();
     expect(screen.getByText("Backend Developer")).toBeInTheDocument();
-    expect(screen.getByText("Москва")).toBeInTheDocument();
-    expect(screen.getByText("Стажёр")).toBeInTheDocument();
+    expect(screen.getByText("i.ivanov@avito.ru")).toBeInTheDocument();
+    expect(screen.getByText("Ревью кода")).toBeInTheDocument();
+    expect(screen.getAllByText("С чем можно обратиться")).toHaveLength(2);
+    expect(screen.getByAltText("avatar")).toHaveAttribute("src", "https://example.com/eva.jpg");
+    expect(screen.queryByText("Москва")).not.toBeInTheDocument();
     expect(screen.queryByText("Ева")).not.toBeInTheDocument();
+    expect(screen.queryByText("Стажёр")).not.toBeInTheDocument();
   });
 
   it("does not send an empty question and blocks a second send while streaming", () => {
