@@ -1,0 +1,35 @@
+.wrapper {
+  padding: 30px;
+  gap: 32px;
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.title {
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 1;
+  color: #000000;
+}
+
+.description {
+  font-weight: 400;
+  font-size: 18px;
+  line-height: calc(22 / 18*100%);
+  color: #707070;
+}
+
+.button {
+  padding: 10px 20px;
+  height: 40px;
+  background: #000000;
+  border-radius: 10px;
+  font-weight: 400;
+  font-size: 18px;
+  line-height: calc(22 / 18*100%);
+  color: #FFFFFF;
+}

@@ -3,5 +3,9 @@
 **/.env
 **/.env.*
 !.env.example
-
+node_modules
+.vite
+coverage/
 *.log
+package-lock.json
+nginx.conf
