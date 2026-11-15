@@ -8,6 +8,11 @@ describe("isCurrentUserResponse", () => {
         user: { id: "1", full_name: "Ева Смирнова", login: "e.smirnova", role: "intern" },
       }),
     ).toBe(true);
+    expect(
+      isCurrentUserResponse({
+        user: { id: "2", full_name: "Елена", login: "e.morozova", role: "manager" },
+      }),
+    ).toBe(true);
   });
 
   it("rejects malformed payloads", () => {

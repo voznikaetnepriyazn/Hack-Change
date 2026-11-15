@@ -26,18 +26,19 @@ describe("router", () => {
   });
 
   it("opens the chat for a restored intern and redirects unknown paths", async () => {
+    useProfileStore.setState({ user: internUser });
     render(
       <AuthProvider>
         <RouterProvider router={router} />
       </AuthProvider>,
     );
 
-    expect(await screen.findByText("Привет, Имя!")).toBeInTheDocument();
+    expect(await screen.findByText("Привет, Ева Смирнова!")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("link", { name: "Задачи" }));
     expect(await screen.findByText("Список задач, их описание и дедлайны")).toBeInTheDocument();
 
     await router.navigate("/missing");
-    expect(await screen.findByText("Привет, Имя!")).toBeInTheDocument();
+    expect(await screen.findByText("Привет, Ева Смирнова!")).toBeInTheDocument();
   });
 });

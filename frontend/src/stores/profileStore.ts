@@ -4,6 +4,7 @@ import { User } from "../account/types/account.types";
 interface Description {
   intern: string;
   lead: string;
+  manager: string;
 }
 
 interface ProfileState {
@@ -18,6 +19,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
   description: {
     intern: "Личная информация и настройки профиля стажёра.",
     lead: "Личная информация руководителя.",
+    manager: "Личная информация менеджера.",
   },
   user: null,
 

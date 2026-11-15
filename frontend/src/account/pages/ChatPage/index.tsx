@@ -11,6 +11,7 @@ import { IconInfo } from "../../../shared/components/icons/IconInfo";
 import { IconTeam } from "../../../shared/components/icons/IconTeam";
 import { IconArrow } from "../../../shared/components/icons/IconArrow";
 import { IconSend } from "../../../shared/components/icons/IconSend";
+import { CommandItem } from "../../components/CommandItem";
 
 
 const buttons = [
@@ -36,20 +37,6 @@ interface Message {
   text: string;
   role?: "user" | "bot";
   employeeCards?: EmployeeCard[];
-}
-
-function employeeDetails(employee: EmployeeCard): Array<[string, string | undefined]> {
-  return [
-    ["Роль", employee.role],
-    ["Грейд", employee.grade],
-    ["Команда", employee.team_id],
-    ["Офис", employee.office],
-    ["Формат работы", employee.work_format],
-    ["График", employee.work_schedule],
-    ["Статус", employee.status],
-    ["Дата начала", employee.start_date],
-    ["Обязанности", employee.responsibilities],
-  ];
 }
 
 export const ChatPage = () => {
@@ -164,7 +151,7 @@ export const ChatPage = () => {
   return (
     <div className={styles.container}>
       <div ref={chatRef} className={styles.chat}>
-        <h1 className={styles.title}>Привет, Имя!</h1>
+        <h1 className={styles.title}>Привет, {user?.full_name}!</h1>
   
         <p className={styles.description}>
           Я AI-Budddy, твой помощник в Авито.
@@ -191,30 +178,20 @@ export const ChatPage = () => {
           <div className={styles.messages}>
             {messages.map((message, index) => (
               <div
-                key={index}
-                className={`${styles.message} ${message.role === "user" ? styles.user : styles.bot} ${message.employeeCards ? styles.messageWithCards : ""}`}
-              >
-                <p className={styles.message__text}>{message.text}</p>
-                {message.employeeCards?.map((employee, cardIndex) => (
-                  <article
-                    className={styles.employeeCard}
-                    key={`${employee.full_name ?? employee.first_name ?? "employee"}-${cardIndex}`}
-                  >
-                    {employee.full_name && <h2>{employee.full_name}</h2>}
-                    {employee.position && <p className={styles.employeePosition}>{employee.position}</p>}
-                    <dl>
-                      {employeeDetails(employee).map(([label, value]) =>
-                        value ? (
-                          <div key={label}>
-                            <dt>{label}</dt>
-                            <dd>{value}</dd>
-                          </div>
-                        ) : null,
-                      )}
-                    </dl>
-                  </article>
-                ))}
-              </div>
+              key={index}
+              className={`${styles.message} ${message.role === "user" ? styles.user : styles.bot} ${message.employeeCards ? styles.messageWithCards : ""}`}
+            >
+              <p className={styles.message__text}>{message.text}</p>
+              {
+                message.employeeCards && (
+                  <div className={styles.employeeCards}>
+                    {message.employeeCards?.map((employee, cardIndex) => (
+                      <CommandItem employee={employee} key={cardIndex} />
+                    ))}
+                  </div>
+                )
+              }
+            </div>
             ))}
           </div>
         )}

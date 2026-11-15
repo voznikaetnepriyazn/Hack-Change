@@ -21,6 +21,11 @@ const loginPayload = {
 describe("isLoginResponse", () => {
   it("accepts the backend user identity response", () => {
     expect(isLoginResponse(loginPayload)).toBe(true);
+    expect(
+      isLoginResponse({
+        user: { id: "2", full_name: "Елена", login: "e.morozova", role: "manager" },
+      }),
+    ).toBe(true);
   });
 
   it("rejects malformed payloads", () => {

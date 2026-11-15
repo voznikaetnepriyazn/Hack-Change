@@ -29,6 +29,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const setProfileUser = useProfileStore((state) => state.setProfileUser);
+  const user = useProfileStore((state) => state.user);
 
   const login = async (login: string, password: string) => {
     try {
@@ -36,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearSessionChat();
       if (data) {
         const { user } = data;
-        const userProfile = await getCurrentUser();
+        const userProfile = await getCurrentUser(user.role);
         if (userProfile) {
           setProfileUser(userProfile);
         }
@@ -55,8 +56,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const restoreAuth = async () => {
       try {
-        const userProfile = await getCurrentUser();
-        setProfileUser(userProfile);
+        if (user) {
+          const userProfile = await getCurrentUser();
+          setProfileUser(userProfile);
+        }
       } catch {
         clearSessionChat();
         setProfileUser(null);

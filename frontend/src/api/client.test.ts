@@ -24,12 +24,23 @@ describe("apiRequest", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/auth/login",
+      "http://localhost:8080/auth/login",
       expect.objectContaining({
         method: "POST",
         credentials: "include",
       }),
     );
+  });
+
+  it("returns null for an empty 204 response without reading a body", async () => {
+    const json = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 204, json }),
+    );
+
+    await expect(apiRequest("auth/logout", { method: "POST" })).resolves.toBeNull();
+    expect(json).not.toHaveBeenCalled();
   });
 
   it("keeps an explicit credentials mode", async () => {
@@ -39,7 +50,7 @@ describe("apiRequest", () => {
     await apiRequest("health", { credentials: "omit", headers: { "X-Test": "1" } });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/health",
+      "http://localhost:8080/health",
       expect.objectContaining({ credentials: "omit" }),
     );
   });

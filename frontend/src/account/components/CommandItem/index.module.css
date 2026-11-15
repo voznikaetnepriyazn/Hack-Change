@@ -1,0 +1,95 @@
+.employee {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  gap: 16px;
+  max-width: 450px;
+  width: 100%;
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  box-shadow: 0px 12px 40px rgba(20, 28, 46, 0.08);
+  border-radius: 20px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #D9D9D9;
+  color: #000;
+  font-weight: 400;
+  font-size: 32px;
+  line-height: calc(39 / 32*100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatar img {
+  object-fit: contain;
+  width: 100%;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-weight: 400;
+  font-size: 24px;
+
+  max-width: 200px;
+  overflow: hidden;
+  opacity: 1;
+  white-space: nowrap;
+
+  transition:
+    max-width 0.3s ease,
+    opacity 0.15s ease;
+}
+
+
+.name {
+  font-weight: 600;
+  color: #000000;
+  line-height: 1;
+}
+
+.email,
+.position {
+  color: rgba(0, 0, 0, 0.5);
+  line-height: 1;
+}
+
+.bottom {
+  width: 100%;
+}
+
+.bottomTitle {
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1;
+  color: #20242D;
+}
+
+.bottomItems {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.bottomItem {
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1;
+  color: #707070;
+}

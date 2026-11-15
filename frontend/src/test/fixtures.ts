@@ -2,7 +2,7 @@ import type { User } from "../account/types/account.types";
 
 export const internUser: User = {
   id: "1",
-  name: "Ева Смирнова",
+  full_name: "Ева Смирнова",
   avatar: null,
   position: "Стажёр",
   phone: "+7 (999) 999-99-99",
@@ -34,7 +34,7 @@ export const internUser: User = {
 
 export const leadUser: User = {
   id: "3",
-  name: "Дмитрий Волков",
+  full_name: "Дмитрий Волков",
   avatar: "https://example.com/avatar.jpg",
   position: "Руководитель",
   login: "@ivan",

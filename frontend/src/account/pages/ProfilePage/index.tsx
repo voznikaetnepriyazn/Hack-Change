@@ -4,12 +4,13 @@ import { ProfileItem } from "../../components/ProfileItem";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../../auth/context/AuthContext";
 import { Loader } from "../../../shared/components/UI/Loader";
+import { IconArrow } from "../../../shared/components/icons/IconArrow";
 
 export const ProfilePage = () => {
   const title = useProfileStore((state) => state.title);
   const description = useProfileStore((state) => state.description);
   const user = useProfileStore((state) => state.user);
-  const { isAuthLoading } = useAuth();  
+  const { isAuthLoading, logout } = useAuth();  
 
   const statusRequest = (status: string) => {
     switch (status) {
@@ -137,7 +138,7 @@ export const ProfilePage = () => {
                       {request.name}
                     </span>
                     <span
-                      className={`${styles.requests__itemValue} ${styles.requests__itemValueStatus}`}
+                      className={`${styles.requests__itemValue} ${styles.requests__itemValueStatus} ${styles[request.status]}`}
                     >
                       {statusRequest(request.status)}
                     </span>
@@ -173,6 +174,10 @@ export const ProfilePage = () => {
             )}
           </div>
         )}
+        <button className={styles.logout} onClick={() => logout()}>
+          <IconArrow className={styles.logout__icon}/>
+          Выйти 
+        </button>
       </div>
     </div>
   );

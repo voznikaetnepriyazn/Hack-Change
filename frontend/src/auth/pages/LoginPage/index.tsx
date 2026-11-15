@@ -9,6 +9,7 @@ import { HackInput } from "../../../shared/components/UI/HackInput";
 import { HackButton } from "../../../shared/components/UI/HackButton";
 import { BrandName } from "../../../shared/components/BrandName";
 import { Loader } from "../../../shared/components/UI/Loader";
+import image2 from "../../../assets/images/login-bg.png";
 
 export const LoginPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -73,7 +74,7 @@ export const LoginPage = () => {
 
   return (
     <main className="page">
-      <aside className={styles.left}>
+      <aside className={styles.left} style={{ backgroundImage: `url(${image2})` }}>
         <div className={styles.left__container}>
           <div className={styles.left__name}>ВНУТРЕННИЙ СЕРВИС</div>
           <h1 className={styles.left__title}>Твой помощник на стажировке</h1>

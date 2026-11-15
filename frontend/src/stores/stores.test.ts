@@ -10,7 +10,8 @@ describe("stores", () => {
   it("exposes questions, documents and profile content", () => {
     expect(useQuestionsStore.getState().questions).toHaveLength(8);
     expect(useQuestionsStore.getState().title).toBe("Частые вопросы");
-    expect(useDocumentsStore.getState().documents).toHaveLength(5);
+    expect(useDocumentsStore.getState().documents).toHaveLength(9);
+    expect(useDocumentsStore.getState().documents[0]?.link).toContain("team_alpha_contacts");
     expect(useProfileStore.getState().description.lead).toContain("руководителя");
     expect(useInternStore.getState().metrics.requests).toBe(20);
   });
@@ -23,7 +24,7 @@ describe("stores", () => {
     expect(useProfileStore.getState().user).toBeNull();
 
     useInternStore.getState().setInternUser(internUser);
-    expect(useInternStore.getState().user?.name).toBe(internUser.name);
+    expect(useInternStore.getState().user?.full_name).toBe(internUser.full_name);
     useInternStore.getState().setInternUser(null);
   });
 

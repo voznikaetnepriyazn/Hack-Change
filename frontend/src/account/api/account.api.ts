@@ -1,12 +1,11 @@
 import { API_URL } from "../../api/config";
-import { apiRequest } from "../../api/client";
 import { isCurrentUserResponse } from "../validation/account.validation";
 import ApiError from "../../shared/errors/ApiError";
-import { EmployeeCard, User } from "../types/account.types";
+import { User, EmployeeCard } from "../types/account.types";
 
 const intern: User = {
   id: "1",
-  name: "Имя Фамилия",
+  full_name: "Имя Фамилия",
   avatar: null,
   position: "Стажёр",
   phone: "+7 (999) 999-99-99",
@@ -44,31 +43,62 @@ const intern: User = {
   vacationStart: new Date(),
   vacationEnd: new Date(new Date().setDate(new Date().getDate() + 10)),
 };
-export const getCurrentUser = async (): Promise<User> => {
-  const data: unknown = await apiRequest("auth/me");
+// const intern1: User = {
+//   id: "2",
+//   avatar:
+//     "https://thumb.wikimedia.org/wikipedia/ru/thumb/0/0f/Tom_Holland_as_Spider-Man.jpg/330px-Tom_Holland_as_Spider-Man.jpg?utm_source=ru.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+//   full_name: "Иван Иванов",
+//   position: "Стажёр",
+//   phone: "+7 (999) 999-99-98",
+//   login: "@ivan",
+//   role: "intern" as const,
+//   vacationStart: null,
+//   vacationEnd: null,
+//   command: "Команда 1",
+//   post: "Должность",
+//   formatWork: "Гибрид, 20 ч/нед",
+//   office: "Москва",
+//   statusVacation: "Онбординг",
+//   githubProfile: {
+//     login: "i.ivanov",
+//     username: "ivan-ivanov-dev",
+//   },
+//   requests: [
+//     {
+//       id: "1",
+//       name: "Отгул на 20 ноября",
+//       description: "",
+//       status: "pending",
+//     },
+//   ],
+// };
+const lead: User = {
+  id: "3",
+  avatar:
+    "https://thumb.wikimedia.org/wikipedia/ru/thumb/0/0f/Tom_Holland_as_Spider-Man.jpg/330px-Tom_Holland_as_Spider-Man.jpg?utm_source=ru.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+  full_name: "Иван Иванов",
+  position: "Руководитель",
+  phone: "+7 (999) 999-99-98",
+  login: "@ivan",
+  role: "lead" as const,
+  command: "Команда 1",
+  post: "Должность",
+  formatWork: "Гибрид, 40 ч/нед",
+  office: "Москва",
+};
+
+export const getCurrentUser = async (role?: string) => {
+  const data = {
+    user: null as User | null,
+  };
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  data.user = role === "lead" ? lead : intern;
 
   if (!isCurrentUserResponse(data)) {
     throw new ApiError("Invalid response format", 400);
   }
 
-  const authUser = data.user;
-  return {
-    id: authUser.id,
-    name: authUser.full_name,
-    avatar: null,
-    position:
-      authUser.role === "intern"
-        ? "Стажёр"
-        : authUser.role === "lead"
-          ? "Руководитель"
-          : "Менеджер",
-    login: authUser.login,
-    command: "",
-    post: "",
-    formatWork: "",
-    office: "",
-    role: authUser.role,
-  };
+  return data.user;
 };
 
 export const getIntern = async () => {
@@ -80,7 +110,6 @@ export const getIntern = async () => {
 
   return data.user;
 };
-
 
 export interface ChatStreamHandlers {
   onDelta: (text: string) => void;
@@ -94,9 +123,11 @@ const employeeCardFields: (keyof EmployeeCard)[] = [
   "first_name",
   "middle_name",
   "full_name",
+  "avatar",
   "role",
   "position",
   "grade",
+  "email",
   "team_id",
   "office",
   "work_format",
@@ -227,7 +258,10 @@ export function streamChat(
         }
       };
     } catch (error) {
-      if (stopped || (error instanceof DOMException && error.name === "AbortError")) {
+      if (
+        stopped ||
+        (error instanceof DOMException && error.name === "AbortError")
+      ) {
         return;
       }
 

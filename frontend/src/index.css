@@ -4,6 +4,14 @@
   color: #1c1917;
   background: #ffffff;
   font-family: "Inter", sans-serif;
+  --dark: #000000;
+  --light: #ffffff;
+  --gray: #F0F0F0;
+  --blue: #00AAFF;
+  --blue-light: #0d79af;
+  --red: #FF1C4C;
+  --green: #BAFFB8;
+  --purple: #9F5CF3;
 }
 
 *, *::before, *::after {
