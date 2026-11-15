@@ -1,0 +1,88 @@
+package embed
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+)
+
+const (
+	defaultBaseURL   = "https://integrate.api.nvidia.com/v1"
+	defaultModel     = "nvidia/nemotron-3.5-embed-1b"
+	outputDimensions = 1024
+	documentInput    = "passage"
+	queryInput       = "query"
+)
+
+var (
+	ErrInvalidConfig   = errors.New("invalid embedding client configuration")
+	ErrEmptyInput      = errors.New("embedding input must not be empty")
+	ErrInvalidResponse = errors.New("invalid embedding response")
+	ErrEmbeddingCount  = errors.New("embedding response count does not match input count")
+)
+
+type Embedder struct {
+	apiKey     string
+	httpClient *http.Client
+	model      string
+	baseURL    string
+}
+
+// NewEmbedder creates an HTTP client for the NVIDIA NIM embeddings API.
+// An empty baseURL uses the NVIDIA API root.
+func NewEmbedder(apiKey, baseURL, model string) *Embedder {
+	return NewEmbedderWithHTTPClient(apiKey, baseURL, model, nil)
+}
+
+// NewEmbedderWithHTTPClient creates an embedder that uses the provided HTTP client.
+func NewEmbedderWithHTTPClient(apiKey, baseURL, model string, httpClient *http.Client) *Embedder {
+	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	if baseURL == "" {
+		baseURL = defaultBaseURL
+	}
+	baseURL = strings.TrimSuffix(baseURL, "/embeddings")
+	model = strings.TrimSpace(model)
+	if model == "" {
+		model = defaultModel
+	}
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: 180 * time.Second}
+	}
+
+	return &Embedder{
+		apiKey:     strings.TrimSpace(apiKey),
+		httpClient: httpClient,
+		model:      model,
+		baseURL:    baseURL,
+	}
+}
+
+type Embedding interface {
+	Embed(ctx context.Context, text string) ([]float32, error)
+	EmbedBatch(ctx context.Context, texts []string) ([][]float32, error)
+	EmbedQuery(ctx context.Context, query string) ([]float32, error)
+}
+
+var _ Embedding = (*Embedder)(nil)
+
+func (e *Embedder) validate() error {
+	if e == nil || e.apiKey == "" || e.httpClient == nil || e.model == "" || e.baseURL == "" {
+		return ErrInvalidConfig
+	}
+	if !validHTTPSURL(e.baseURL) || strings.ContainsAny(e.model, "?#") {
+		return ErrInvalidConfig
+	}
+	return nil
+}
+
+func validHTTPSURL(value string) bool {
+	parsed, err := url.ParseRequestURI(value)
+	return err == nil &&
+		parsed.Scheme == "https" &&
+		parsed.Host != "" &&
+		parsed.RawQuery == "" &&
+		parsed.Fragment == ""
+}
