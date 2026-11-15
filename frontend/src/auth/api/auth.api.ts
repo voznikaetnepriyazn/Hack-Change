@@ -9,10 +9,6 @@ export const isLoginResponse = (
     return false;
   }
 
-  if (!('message' in data) || typeof data.message !== 'string') {
-    return false;
-  }
-
   if (
     !('user' in data) ||
     typeof data.user !== 'object' ||

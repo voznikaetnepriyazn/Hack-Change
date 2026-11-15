@@ -5,15 +5,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { logoutUser } from "../api/auth.api";
-// import { loginUser, logoutUser } from "../api/auth.api";
+import { logoutUser, loginUser } from "../api/auth.api";
 import { getCurrentUser } from "../../account/api/account.api";
 import { useProfileStore } from "../../stores/profileStore";
 
 export interface AuthContextType {
   isAuthLoading: boolean;
-  // login: (login: string, password: string) => Promise<void>;
-  login: () => Promise<void>;
+  login: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -31,16 +29,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const setProfileUser = useProfileStore((state) => state.setProfileUser);
 
-  // const login = async (login: string, password: string) => {
-  const login = async () => {
-    // const data = await loginUser(login, password);
-    // if(data) {
-    const userProfile = await getCurrentUser();
-
-    if (userProfile) {
-      setProfileUser(userProfile);
+  const login = async (login: string, password: string) => {
+    try {
+      const data = await loginUser(login, password);
+      if (data) {
+        const { user } = data;
+        const userProfile = await getCurrentUser(user.role);
+        if (userProfile) {
+          setProfileUser(userProfile);
+        }
+      }
+    } catch (error) {
+      throw new Error("Failed to login");
     }
-    // }
   };
 
   const logout = async () => {

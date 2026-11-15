@@ -1,8 +1,7 @@
-// import { apiRequest } from "../../api/client";
-// import { isCurrentUserResponse } from "../validation/account.validation";
-// import ApiError from "../../shared/errors/ApiError";
+import { API_URL } from "../../api/config";
+import { isCurrentUserResponse } from "../validation/account.validation";
+import ApiError from "../../shared/errors/ApiError";
 import { User } from "../types/account.types";
-// import { API_URL } from "../../api/config";
 
 const intern: User = {
   id: "1",
@@ -88,20 +87,16 @@ const lead: User = {
   office: "Москва",
 };
 
-export const getCurrentUser = async () => {
-  // const data: unknown = await apiRequest('api/users/me', {
-  //   method: 'GET'
-  // });
-
+export const getCurrentUser = async (role: string) => {
   const data = {
     user: null as User | null,
   };
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  data.user = lead;
+  data.user = role === "lead" ? lead : intern;
 
-  // if (!isCurrentUserResponse(data)) {
-  //   throw new ApiError("Invalid response format", 400);
-  // }
+  if (!isCurrentUserResponse(data)) {
+    throw new ApiError("Invalid response format", 400);
+  }
 
   return data.user;
 };
@@ -117,9 +112,103 @@ export const getIntern = async () => {
 };
 
 
-// export const streamChat = async () => {
-//   const stream = new EventSource(`${API_URL.replace(/\/$/, '')}/stream`, {
-//     withCredentials: true,
-//   });
-  
-// }
+export interface ChatStreamHandlers {
+  onDelta: (text: string) => void;
+  onDone: () => void;
+  onError: (error: Error) => void;
+}
+
+function apiUrl(path: string) {
+  return `${API_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+}
+
+async function readErrorMessage(response: Response) {
+  try {
+    const data: unknown = await response.json();
+    if (
+      data &&
+      typeof data === "object" &&
+      "error" in data &&
+      typeof data.error === "string"
+    ) {
+      return data.error;
+    }
+  } catch {
+    return `API responded with ${response.status}`;
+  }
+
+  return `API responded with ${response.status}`;
+}
+
+export function streamChat(
+  message: string,
+  role: string,
+  handlers: ChatStreamHandlers,
+) {
+  if (role !== "intern") {
+    handlers.onError(new Error("Chat access is restricted"));
+    return () => {};
+  }
+
+  const controller = new AbortController();
+  let source: EventSource | null = null;
+  let stopped = false;
+  let finished = false;
+
+  const stop = () => {
+    stopped = true;
+    controller.abort();
+    source?.close();
+  };
+
+  void (async () => {
+    try {
+      const response = await fetch(apiUrl("chat"), {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new ApiError(await readErrorMessage(response), response.status);
+      }
+
+      if (stopped) {
+        return;
+      }
+
+      source = new EventSource(apiUrl("stream"), { withCredentials: true });
+
+      source.onmessage = (event) => {
+        if (event.data) {
+          handlers.onDelta(event.data);
+        }
+      };
+
+      source.addEventListener("done", () => {
+        finished = true;
+        source?.close();
+        handlers.onDone();
+      });
+
+      source.onerror = () => {
+        source?.close();
+        if (!stopped && !finished) {
+          handlers.onError(new Error("Stream failed"));
+        }
+      };
+    } catch (error) {
+      if (stopped || (error instanceof DOMException && error.name === "AbortError")) {
+        return;
+      }
+
+      handlers.onError(
+        error instanceof Error ? error : new Error("Failed to start chat"),
+      );
+    }
+  })();
+
+  return stop;
+}

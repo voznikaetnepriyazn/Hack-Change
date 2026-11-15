@@ -56,8 +56,7 @@ export const LoginPage = () => {
     }
 
     try {
-      // await loginUser(login, password);
-      await loginUser();
+      await loginUser(login, password);
       setPassword("");
       setLogin("");
       setRole("");
@@ -67,20 +66,6 @@ export const LoginPage = () => {
     } finally {
       setIsLoading(false);
     }
-    // setErrorMessage(null);
-    // try {
-    //   await login(login, password);
-    //   navigate("/account");
-    // } catch (error) {
-    //   if (error instanceof ApiError) {
-    //     setErrorMessage(error.message);
-    //   } else {
-    //     console.error(error);
-    //     setErrorMessage(
-    //       "An error occurred while logging in. Please try again.",
-    //     );
-    //   }
-    // }
   };
 
   if (isLoading) {

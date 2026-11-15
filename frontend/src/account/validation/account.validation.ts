@@ -19,12 +19,10 @@ export const isCurrentUserResponse = (
 
   return (
     'id' in user &&
-    typeof user.id === 'number' &&
+    typeof user.id === 'string' &&
     'login' in user &&
     typeof user.login === 'string' &&
-    'createdAt' in user &&
-    typeof user.createdAt === 'string' &&
-    'updatedAt' in user &&
-    typeof user.updatedAt === 'string'
+    'role' in user &&
+    typeof user.role === 'string'
   );
 };

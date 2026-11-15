@@ -1,5 +1,5 @@
 export const validateLoginData = (login: string, password: string) => {
-  login = login.trim();
+  login = login.trim().replace(/^@+/, '');
 
   if (!login || !password) {
     throw new Error("Password and login are required");
