@@ -1,0 +1,28 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Validate frontend integration",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npm --prefix frontend test -- --run && npm --prefix frontend run build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install frontend dependencies",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"frontend",
+				"ci"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

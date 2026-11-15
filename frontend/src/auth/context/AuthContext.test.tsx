@@ -41,6 +41,7 @@ describe("AuthProvider", () => {
   });
 
   it("restores the profile and keeps the saved chat", async () => {
+    useProfileStore.setState({ user: internUser });
     currentUser.mockResolvedValue(internUser as Profile);
     render(
       <AuthProvider>
@@ -50,11 +51,26 @@ describe("AuthProvider", () => {
 
     expect(screen.getByRole("button")).toHaveTextContent("loading");
     await waitFor(() => expect(screen.getByRole("button")).toHaveTextContent("ready"));
+    expect(currentUser).toHaveBeenCalledWith();
     expect(useProfileStore.getState().user?.id).toBe(internUser.id);
     expect(sessionStorage.getItem("chat-session")).toContain("старый");
   });
 
-  it("clears the chat when the session cannot be restored", async () => {
+  it("does not request a profile or clear the chat when nobody is signed in", async () => {
+    render(
+      <AuthProvider>
+        <SessionProbe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByRole("button")).toHaveTextContent("ready"));
+    expect(currentUser).not.toHaveBeenCalled();
+    expect(useProfileStore.getState().user).toBeNull();
+    expect(sessionStorage.getItem("chat-session")).toContain("старый");
+  });
+
+  it("clears the chat when the saved profile cannot be restored", async () => {
+    useProfileStore.setState({ user: internUser });
     currentUser.mockRejectedValue(new Error("unauthorized"));
     render(
       <AuthProvider>
@@ -63,6 +79,7 @@ describe("AuthProvider", () => {
     );
 
     await waitFor(() => expect(screen.getByRole("button")).toHaveTextContent("ready"));
+    expect(currentUser).toHaveBeenCalledOnce();
     expect(useProfileStore.getState().user).toBeNull();
     expect(sessionStorage.getItem("chat-session")).toBeNull();
   });
@@ -109,6 +126,7 @@ describe("AuthProvider", () => {
   });
 
   it("does not replace the profile when login returns no user", async () => {
+    useProfileStore.setState({ user: internUser });
     currentUser.mockResolvedValue(internUser as Profile);
     let auth: AuthContextType | null = null;
 

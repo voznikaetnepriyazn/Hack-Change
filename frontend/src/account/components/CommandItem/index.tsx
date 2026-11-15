@@ -42,4 +42,3 @@ export const CommandItem = ({ employee }: CommandItemProps) => {
     </div>
   );
 };
-

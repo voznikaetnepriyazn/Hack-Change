@@ -26,6 +26,7 @@ describe("router", () => {
   });
 
   it("opens the chat for a restored intern and redirects unknown paths", async () => {
+    useProfileStore.setState({ user: internUser });
     render(
       <AuthProvider>
         <RouterProvider router={router} />
