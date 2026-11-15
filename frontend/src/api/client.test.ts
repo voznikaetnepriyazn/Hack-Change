@@ -61,6 +61,21 @@ describe("apiRequest", () => {
     );
   });
 
+  it("accepts a 204 No Content response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+        json: async () => {
+          throw new Error("no content");
+        },
+      }),
+    );
+
+    await expect(apiRequest("auth/logout", { method: "POST" })).resolves.toBeNull();
+  });
+
   it("throws ApiError with the server message", async () => {
     vi.stubGlobal(
       "fetch",

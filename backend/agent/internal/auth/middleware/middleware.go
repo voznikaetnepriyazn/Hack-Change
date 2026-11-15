@@ -13,6 +13,7 @@ import (
 const (
 	userIDLocalKey = "auth.userID"
 	roleLocalKey   = "auth.role"
+	userLocalKey   = "auth.user"
 )
 
 var ErrInvalidConfig = errors.New("invalid authentication middleware configuration")
@@ -60,6 +61,8 @@ func New(store authsession.Store, users UserResolver, cfg Config) (fiber.Handler
 
 		c.Locals(userIDLocalKey, user.ID)
 		c.Locals(roleLocalKey, user.Role)
+		user.PasswordHash = ""
+		c.Locals(userLocalKey, user)
 		return c.Next()
 	}, nil
 }
@@ -74,6 +77,12 @@ func UserID(c *fiber.Ctx) (string, bool) {
 func UserRole(c *fiber.Ctx) (domain.Role, bool) {
 	role, ok := c.Locals(roleLocalKey).(domain.Role)
 	return role, ok && role != ""
+}
+
+// User returns the authenticated user without credential data.
+func User(c *fiber.Ctx) (domain.User, bool) {
+	user, ok := c.Locals(userLocalKey).(domain.User)
+	return user, ok && user.ID != ""
 }
 
 func unauthorized(c *fiber.Ctx) error {

@@ -1,188 +1,71 @@
 # AI-BUDDY — Frontend
 
-Frontend часть приложения AI-BUDDY. Проект построен на React, TypeScript и Vite. Для управления состоянием используется Zustand, для маршрутизации — React Router.
-
-## Технологический стек
-
-- **React 19** — библиотека для создания пользовательского интерфейса.
-- **TypeScript** — статическая типизация JavaScript.
-- **Vite** — инструмент разработки и сборки.
-- **React Router 7** — маршрутизация приложения.
-- **Zustand** — управление состоянием.
-- **Vitest** — тестирование.
-- **Nginx** — production-сервер для раздачи собранного приложения.
-- **Docker** — контейнеризация приложения.
+Frontend приложения AI-BUDDY на React, TypeScript и Vite.
 
 ## Требования
 
-Для локальной разработки:
+- Node.js 22 или выше
+- npm
 
-- Node.js 22 или выше.
-- npm.
-- Docker Desktop — для запуска через Docker.
-
-## Установка и запуск
-
-Перейдите в директорию frontend:
+## Локальный запуск
 
 ```bash
 cd frontend
-```
-
-Установите зависимости:
-
-```bash
 npm ci
-```
-
-Запустите сервер разработки:
-
-```bash
 npm run dev
 ```
 
-По умолчанию приложение доступно по адресу:
+Vite слушает `0.0.0.0:3000` (порт фиксирован через `strictPort`). Откройте
+<http://localhost:3000>.
 
-```text
-http://localhost:5173
-```
+Запросы frontend идут на `/api`. Dev- и preview-серверы Vite удаляют префикс
+`/api` и проксируют запрос в Go backend на `http://localhost:8080`. Другой
+адрес backend задаётся переменной `BACKEND_PROXY_TARGET`.
 
-## Доступные команды
+## Проверки и сборка
 
 | Команда | Описание |
 |---|---|
-| `npm run dev` | Запуск сервера разработки |
 | `npm run build` | Проверка TypeScript и production-сборка |
-| `npm run preview` | Локальный просмотр production-сборки |
-| `npm test` | Запуск тестов Vitest |
+| `npm test -- --run` | Запуск тестов Vitest один раз |
+| `npm run preview` | Локальный просмотр production-сборки на порту 3000 |
 
-Production-сборка создаётся в директории `dist`.
+Production-сборка создаётся в `dist`.
 
 ## Docker
 
-Для frontend используется многоэтапная сборка Docker.
+Docker-образ использует Node/Vite Preview; Nginx не используется.
 
-### Структура Docker-файлов
-
-```text
-frontend/
-├── Dockerfile
-├── .dockerignore
-├── nginx.conf
-├── package.json
-├── package-lock.json
-└── ...
-```
-
-### Сборка Docker-образа
-
-Команду необходимо выполнять из корневой директории проекта:
+Сборка из корня репозитория:
 
 ```bash
 docker build -t ai-buddy-frontend ./frontend
 ```
 
-Во время сборки выполняются следующие действия:
-
-1. Создаётся временный контейнер на основе Node.js.
-2. Устанавливаются зависимости через `npm ci`.
-3. Копируются исходные файлы приложения.
-4. Выполняется `npm run build`.
-5. Создаётся production-образ на основе Nginx.
-6. Собранные файлы из `dist` копируются в директорию Nginx.
-
-В результате production-контейнер содержит только Nginx и готовые статические файлы приложения. Node.js и исходный код в него не попадают.
-
-### Запуск контейнера
+Запуск с backend, доступным на хост-машине:
 
 ```bash
-docker run -d -p 8080:80 --name ai-buddy-frontend ai-buddy-frontend
+docker run --rm -p 3000:3000 \
+  -e BACKEND_PROXY_TARGET=http://host.docker.internal:8080 \
+  ai-buddy-frontend
 ```
 
-Приложение будет доступно по адресу:
+Если frontend и backend находятся в одной Docker-сети, задайте
+`BACKEND_PROXY_TARGET` как адрес backend-сервиса, например
+`http://backend:8080`.
 
-```text
-http://localhost:8080
-```
+## Интеграция с backend
 
-### Управление контейнером
-
-Остановка:
-
-```bash
-docker stop ai-buddy-frontend
-```
-
-Удаление:
-
-```bash
-docker rm ai-buddy-frontend
-```
-
-Просмотр запущенных контейнеров:
-
-```bash
-docker ps
-```
-
-Просмотр логов:
-
-```bash
-docker logs ai-buddy-frontend
-```
-
-### Особенности Nginx
-
-В `nginx.conf` настроена раздача статических файлов приложения.
-
-Для корректной работы React Router используется:
-
-```nginx
-location / {
-    try_files $uri $uri/ /index.html;
-}
-```
-
-Это позволяет открывать вложенные маршруты приложения напрямую и обновлять страницы без получения ошибки 404 от Nginx.
-
-Для файлов в `/assets/` настроено длительное кеширование.
-
-## API и Vite Proxy
-
-В `vite.config.ts` предусмотрен proxy для запросов к `/api`:
-
-```typescript
-server: {
-  port: 5173,
-  proxy: {
-    '/api': {
-      target: 'http://localhost:3001',
-      changeOrigin: true,
-      rewrite: (path) => path.replace(/^\/api/, ''),
-    },
-  },
-},
-```
-
-Эта настройка предназначена для сервера разработки Vite.
-
-Она перенаправляет запросы с `/api` на `http://localhost:3001`, удаляя префикс `/api`.
-
-**Важно:** Vite proxy не используется в production-сборке и не работает в контейнере Nginx. После подключения backend потребуется отдельно настроить взаимодействие frontend и backend в Docker.
-
-На текущем этапе frontend работает независимо от Go backend.
-
-## Текущий статус
-
-- [x] Создан frontend на React и TypeScript.
-- [x] Настроен Vite.
-- [x] Добавлена маршрутизация React Router.
-- [x] Настроено управление состоянием через Zustand.
-- [x] Подготовлен Dockerfile для production-сборки.
-- [x] Настроен Nginx для раздачи приложения.
-- [ ] Подключение frontend к Go backend.
-- [ ] Настройка совместной работы frontend и backend через Docker Compose.
-
----
-
-**AI-BUDDY** — frontend приложения.
+- Backend по умолчанию слушает порт `8080`; frontend обслуживается на `3000`.
+- Backend CORS должен разрешать origin frontend. При проксировании через Vite
+  запросы идут через тот же origin, но прямое обращение к backend требует
+  корректного `CORS_ALLOWED_ORIGINS`.
+- Авторизация использует HTTP-only cookie; API-запросы и SSE отправляют
+  credentials.
+- `/auth/me` восстанавливает пользователя по действующей cookie после
+  перезагрузки приложения.
+- `/chat` и `/stream` доступны только стажёру. События `employee_cards`
+  отображаются в чате отдельными карточками, текстовые события остаются
+  обычными сообщениями SSE.
+- Подробные данные профиля стажёра в `getIntern()` пока являются демонстрационными:
+  backend предоставляет только идентификатор, имя, логин и роль пользователя.

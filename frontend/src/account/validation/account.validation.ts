@@ -20,9 +20,11 @@ export const isCurrentUserResponse = (
   return (
     'id' in user &&
     typeof user.id === 'string' &&
+    'full_name' in user &&
+    typeof user.full_name === 'string' &&
     'login' in user &&
     typeof user.login === 'string' &&
     'role' in user &&
-    typeof user.role === 'string'
+    (user.role === 'intern' || user.role === 'lead' || user.role === 'manager')
   );
 };

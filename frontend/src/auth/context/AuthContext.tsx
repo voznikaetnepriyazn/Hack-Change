@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearSessionChat();
       if (data) {
         const { user } = data;
-        const userProfile = await getCurrentUser(user.role);
+        const userProfile = await getCurrentUser();
         if (userProfile) {
           setProfileUser(userProfile);
         }

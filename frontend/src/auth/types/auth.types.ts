@@ -1,13 +1,12 @@
-export type UserRole = "intern" | "lead" ;
+export type UserRole = "intern" | "lead" | "manager";
 
 export interface AuthUser {
   id: string;
+  full_name: string;
   login: string;
-  password: string;
   role: UserRole;
 }
 
 export interface LoginResponse {
-  message: string;
   user: AuthUser;
 }

@@ -87,8 +87,11 @@ func TestAuthenticatedServerRequiresInternAndIgnoresClientSessionIDs(t *testing.
 	}
 	users := testAuthUsers{
 		"lead-1": {
-			ID:   "lead-1",
-			Role: domain.RoleLead,
+			ID:           "lead-1",
+			FullName:     "Team Lead",
+			Login:        "lead@example.com",
+			Role:         domain.RoleLead,
+			PasswordHash: "must-not-be-returned",
 		},
 	}
 	authHandler, err := authhandler.New(testAuthenticator{}, sessions, authhandler.Config{
@@ -132,6 +135,26 @@ func TestAuthenticatedServerRequiresInternAndIgnoresClientSessionIDs(t *testing.
 	leadResp.Body.Close()
 	if leadResp.StatusCode != http.StatusForbidden {
 		t.Errorf("lead /chat status = %d, want %d", leadResp.StatusCode, http.StatusForbidden)
+	}
+
+	currentUser := httptest.NewRequest(http.MethodGet, "/auth/me", nil)
+	currentUser.AddCookie(&http.Cookie{Name: "auth_session", Value: "lead-token"})
+	currentUserResp := fiberRequest(t, s.app, currentUser)
+	defer currentUserResp.Body.Close()
+	if currentUserResp.StatusCode != http.StatusOK {
+		t.Fatalf("/auth/me status = %d, want %d", currentUserResp.StatusCode, http.StatusOK)
+	}
+	var currentUserBody map[string]map[string]any
+	if err := json.NewDecoder(currentUserResp.Body).Decode(&currentUserBody); err != nil {
+		t.Fatalf("decode /auth/me response: %v", err)
+	}
+	gotUser := currentUserBody["user"]
+	if gotUser["id"] != "lead-1" || gotUser["full_name"] != "Team Lead" ||
+		gotUser["login"] != "lead@example.com" || gotUser["role"] != string(domain.RoleLead) {
+		t.Errorf("/auth/me user = %#v, want the authenticated identity", gotUser)
+	}
+	if _, hasPasswordHash := gotUser["password_hash"]; hasPasswordHash {
+		t.Error("/auth/me must not return credential data")
 	}
 }
 

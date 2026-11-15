@@ -1,4 +1,4 @@
-import { AuthUser, UserRole } from "../../auth/types/auth.types";
+import type { AuthUser, UserRole } from "../../auth/types/auth.types";
 
 interface GitHubProfile {
   login: string;
@@ -33,6 +33,23 @@ export interface User {
 
 export interface CurrentUserResponse {
   user: AuthUser;
+}
+
+export interface EmployeeCard {
+  last_name?: string;
+  first_name?: string;
+  middle_name?: string;
+  full_name?: string;
+  role?: string;
+  position?: string;
+  grade?: string;
+  team_id?: string;
+  office?: string;
+  work_format?: string;
+  work_schedule?: string;
+  status?: string;
+  start_date?: string;
+  responsibilities?: string;
 }
 
 export interface Question {

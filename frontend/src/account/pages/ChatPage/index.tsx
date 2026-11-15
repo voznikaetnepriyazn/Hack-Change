@@ -2,6 +2,7 @@ import styles from "./index.module.css";
 import { useEffect, useRef, useState } from "react";
 import { streamChat } from "../../api/account.api";
 import { loadSessionChat, saveSessionChat, clearSessionChat } from "../../chat/sessionChat";
+import type { EmployeeCard } from "../../types/account.types";
 import { useProfileStore } from "../../../stores/profileStore";
 import ApiError from "../../../shared/errors/ApiError";
 import { IconRocket } from "../../../shared/components/icons/IconRocket";
@@ -34,6 +35,21 @@ const buttons = [
 interface Message {
   text: string;
   role?: "user" | "bot";
+  employeeCards?: EmployeeCard[];
+}
+
+function employeeDetails(employee: EmployeeCard): Array<[string, string | undefined]> {
+  return [
+    ["Роль", employee.role],
+    ["Грейд", employee.grade],
+    ["Команда", employee.team_id],
+    ["Офис", employee.office],
+    ["Формат работы", employee.work_format],
+    ["График", employee.work_schedule],
+    ["Статус", employee.status],
+    ["Дата начала", employee.start_date],
+    ["Обязанности", employee.responsibilities],
+  ];
 }
 
 export const ChatPage = () => {
@@ -83,6 +99,17 @@ export const ChatPage = () => {
             return prev;
           }
           next[next.length - 1] = { ...last, text: last.text + chunk };
+          return next;
+        });
+      },
+      onEmployeeCards: (employeeCards) => {
+        setMessages((prev) => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last?.role !== "bot") {
+            return prev;
+          }
+          next[next.length - 1] = { ...last, employeeCards };
           return next;
         });
       },
@@ -163,8 +190,30 @@ export const ChatPage = () => {
         {messages.length > 0 && (
           <div className={styles.messages}>
             {messages.map((message, index) => (
-              <div key={index} className={`${styles.message} ${message.role === "user" ? styles.user : styles.bot}`}>
+              <div
+                key={index}
+                className={`${styles.message} ${message.role === "user" ? styles.user : styles.bot} ${message.employeeCards ? styles.messageWithCards : ""}`}
+              >
                 <p className={styles.message__text}>{message.text}</p>
+                {message.employeeCards?.map((employee, cardIndex) => (
+                  <article
+                    className={styles.employeeCard}
+                    key={`${employee.full_name ?? employee.first_name ?? "employee"}-${cardIndex}`}
+                  >
+                    {employee.full_name && <h2>{employee.full_name}</h2>}
+                    {employee.position && <p className={styles.employeePosition}>{employee.position}</p>}
+                    <dl>
+                      {employeeDetails(employee).map(([label, value]) =>
+                        value ? (
+                          <div key={label}>
+                            <dt>{label}</dt>
+                            <dd>{value}</dd>
+                          </div>
+                        ) : null,
+                      )}
+                    </dl>
+                  </article>
+                ))}
               </div>
             ))}
           </div>

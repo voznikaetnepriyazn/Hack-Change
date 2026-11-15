@@ -51,6 +51,27 @@ describe("ChatPage", () => {
     expect(stop).toBeTypeOf("function");
   });
 
+  it("renders employee cards received from the stream", () => {
+    streamChat.mockImplementation((_message: string, _role: string, handlers: ChatStreamHandlers) => {
+      handlers.onEmployeeCards?.([
+        {
+          full_name: "Иванов Иван Иванович",
+          position: "Backend Developer",
+          office: "Москва",
+        },
+      ]);
+      handlers.onDone();
+      return vi.fn();
+    });
+
+    render(<ChatPage />);
+    ask("Кто в моей команде?");
+
+    expect(screen.getByRole("heading", { name: "Иванов Иван Иванович" })).toBeInTheDocument();
+    expect(screen.getByText("Backend Developer")).toBeInTheDocument();
+    expect(screen.getByText("Москва")).toBeInTheDocument();
+  });
+
   it("does not send an empty question and blocks a second send while streaming", () => {
     streamChat.mockReturnValue(vi.fn());
     render(<ChatPage />);

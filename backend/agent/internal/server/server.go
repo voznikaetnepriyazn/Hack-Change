@@ -93,6 +93,24 @@ func (s *Server) setupRoutes(authHandler *authhandler.Handler, authMiddleware fi
 	if authHandler != nil {
 		authHandler.RegisterRoutes(s.app)
 	}
+	if requireAuth {
+		s.app.Get("/auth/me", authMiddleware, func(c *fiber.Ctx) error {
+			user, ok := authmiddleware.User(c)
+			if !ok {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error": "Authentication required",
+				})
+			}
+			return c.JSON(fiber.Map{
+				"user": fiber.Map{
+					"id":        user.ID,
+					"full_name": user.FullName,
+					"login":     user.Login,
+					"role":      user.Role,
+				},
+			})
+		})
+	}
 
 	// basic heailth check endpoint
 	s.app.Get("/health", func(c *fiber.Ctx) error {

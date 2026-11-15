@@ -22,10 +22,12 @@ export const isLoginResponse = (
   return (
     'id' in user &&
     typeof user.id === 'string' &&
+    'full_name' in user &&
+    typeof user.full_name === 'string' &&
     'login' in user &&
     typeof user.login === 'string' &&
     'role' in user &&
-    typeof user.role === 'string'
+    (user.role === 'intern' || user.role === 'lead' || user.role === 'manager')
   );
 };
 
@@ -45,20 +47,8 @@ export const loginUser = async (login: string, password: string): Promise<LoginR
   return data;
 }
 
-export const logoutUser = async () => {
-  const data: unknown = await apiRequest('auth/logout', {
+export const logoutUser = async (): Promise<void> => {
+  await apiRequest('auth/logout', {
     method: 'POST'
   });
-
-  if (!data || typeof data !== 'object') {
-    throw new Error('Invalid response format');
-  }
-
-  if (!('message' in data) || typeof data.message !== 'string') {
-    throw new Error('Invalid response format');
-  }
-
-  return {
-    message: data.message,
-  };
 }

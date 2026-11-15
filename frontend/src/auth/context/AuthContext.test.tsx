@@ -84,8 +84,12 @@ describe("AuthProvider", () => {
     await screen.findByText("ready");
 
     loginRequest.mockResolvedValue({
-      message: "ok",
-      user: { id: leadUser.id, login: leadUser.login, password: "x", role: "lead" },
+      user: {
+        id: leadUser.id,
+        full_name: leadUser.name,
+        login: leadUser.login,
+        role: "lead",
+      },
     });
     currentUser.mockResolvedValue(leadUser as Profile);
     await auth!.login("@ivan", "MentorPass123!");
@@ -93,7 +97,7 @@ describe("AuthProvider", () => {
     expect(useProfileStore.getState().user?.role).toBe("lead");
     expect(sessionStorage.getItem("chat-session")).toBeNull();
 
-    logoutRequest.mockResolvedValue({ message: "bye" });
+    logoutRequest.mockResolvedValue(undefined);
     sessionStorage.setItem("chat-session", JSON.stringify([{ text: "ещё", role: "user" }]));
     await auth!.logout();
 
@@ -125,8 +129,12 @@ describe("AuthProvider", () => {
 
     currentUser.mockResolvedValue(null as unknown as Profile);
     loginRequest.mockResolvedValue({
-      message: "ok",
-      user: { id: "1", login: "e.smirnova", password: "x", role: "intern" },
+      user: {
+        id: "1",
+        full_name: "Ева Смирнова",
+        login: "e.smirnova",
+        role: "intern",
+      },
     });
     await auth!.login("e.smirnova", "Password123!");
     expect(useProfileStore.getState().user?.role).toBe("intern");

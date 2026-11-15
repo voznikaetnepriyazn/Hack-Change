@@ -104,8 +104,52 @@
   color: #fff;
 }
 
+.messageWithCards {
+  width: min(90%, 700px);
+  max-width: min(90%, 700px);
+}
+
 .message__text {
   white-space: pre-wrap;
+}
+
+.employeeCard {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #fff;
+  color: #1a1a1a;
+}
+
+.employeeCard h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.employeePosition {
+  margin: 6px 0 12px;
+  color: #555;
+}
+
+.employeeCard dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.employeeCard dl > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) 1fr;
+  gap: 12px;
+}
+
+.employeeCard dt {
+  font-weight: 600;
+}
+
+.employeeCard dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .notice {

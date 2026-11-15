@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getCurrentUser, getIntern, streamChat } from "./account.api";
 import ApiError from "../../shared/errors/ApiError";
+import type { EmployeeCard } from "../types/account.types";
 
 class FakeEventSource {
   static latest: FakeEventSource | null = null;
   onmessage: ((event: MessageEvent) => void) | null = null;
   onerror: (() => void) | null = null;
   closed = false;
-  private listeners = new Map<string, Array<() => void>>();
+  private listeners = new Map<string, Array<(event: MessageEvent) => void>>();
 
   constructor(
     public url: string,
@@ -16,7 +17,7 @@ class FakeEventSource {
     FakeEventSource.latest = this;
   }
 
-  addEventListener(type: string, listener: () => void) {
+  addEventListener(type: string, listener: (event: MessageEvent) => void) {
     const list = this.listeners.get(type) ?? [];
     list.push(listener);
     this.listeners.set(type, list);
@@ -31,7 +32,13 @@ class FakeEventSource {
   }
 
   emitDone() {
-    this.listeners.get("done")?.forEach((listener) => listener());
+    this.listeners.get("done")?.forEach((listener) => listener({ data: "" } as MessageEvent));
+  }
+
+  emitEmployeeCards(data: string) {
+    this.listeners.get("employee_cards")?.forEach((listener) =>
+      listener({ data } as MessageEvent),
+    );
   }
 
   emitError() {
@@ -42,21 +49,34 @@ class FakeEventSource {
 describe("account profile api", () => {
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
-  it("returns the intern profile by default and the lead profile for lead", async () => {
-    vi.useFakeTimers();
+  it("restores the authenticated profile from the backend", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        user: {
+          id: "usr-1",
+          full_name: "Ева Смирнова",
+          login: "e.smirnova",
+          role: "intern",
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
-    const internPromise = getCurrentUser();
-    const leadPromise = getCurrentUser("lead");
-    await vi.advanceTimersByTimeAsync(1000);
-
-    const intern = await internPromise;
-    const lead = await leadPromise;
-
-    expect(intern.role).toBe("intern");
-    expect(intern.login).toBe("@test");
-    expect(lead.role).toBe("lead");
+    await expect(getCurrentUser()).resolves.toMatchObject({
+      id: "usr-1",
+      name: "Ева Смирнова",
+      login: "e.smirnova",
+      role: "intern",
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/auth/me",
+      expect.objectContaining({ credentials: "include" }),
+    );
   });
 
   it("returns the intern card", async () => {
@@ -94,9 +114,10 @@ describe("streamChat", () => {
     vi.stubGlobal("EventSource", FakeEventSource);
 
     const onDelta = vi.fn();
+    const onEmployeeCards = vi.fn();
     const onDone = vi.fn();
     const onError = vi.fn();
-    streamChat("привет", "intern", { onDelta, onDone, onError });
+    streamChat("привет", "intern", { onDelta, onEmployeeCards, onDone, onError });
 
     await vi.waitFor(() => expect(FakeEventSource.latest).not.toBeNull());
     expect(fetchMock).toHaveBeenCalledWith(
@@ -111,12 +132,37 @@ describe("streamChat", () => {
     expect(onDelta).toHaveBeenCalledTimes(1);
     expect(onDelta).toHaveBeenCalledWith("Ответ");
 
+    const cards: EmployeeCard[] = [
+      { full_name: "Иванов Иван Иванович", position: "Backend Developer" },
+    ];
+    FakeEventSource.latest?.emitEmployeeCards(JSON.stringify(cards));
+    expect(onEmployeeCards).toHaveBeenCalledWith(cards);
+
     FakeEventSource.latest?.emitDone();
     expect(onDone).toHaveBeenCalledOnce();
     expect(FakeEventSource.latest?.closed).toBe(true);
 
     FakeEventSource.latest?.emitError();
     expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("reports invalid employee card payloads", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 202 }));
+    vi.stubGlobal("EventSource", FakeEventSource);
+    const onError = vi.fn();
+
+    streamChat("вопрос", "intern", {
+      onDelta: vi.fn(),
+      onDone: vi.fn(),
+      onError,
+    });
+    await vi.waitFor(() => expect(FakeEventSource.latest).not.toBeNull());
+
+    FakeEventSource.latest?.emitEmployeeCards(JSON.stringify([{ password: "private" }]));
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Invalid employee cards event" }),
+    );
+    expect(FakeEventSource.latest?.closed).toBe(true);
   });
 
   it("reports an API error from the chat request", async () => {
