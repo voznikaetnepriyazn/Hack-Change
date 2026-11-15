@@ -2,6 +2,7 @@ import styles from "./index.module.css";
 import { useEffect, useRef, useState } from "react";
 import { streamChat } from "../../api/account.api";
 import { loadSessionChat, saveSessionChat, clearSessionChat } from "../../chat/sessionChat";
+import type { EmployeeCard } from "../../types/account.types";
 import { useProfileStore } from "../../../stores/profileStore";
 import ApiError from "../../../shared/errors/ApiError";
 import { IconRocket } from "../../../shared/components/icons/IconRocket";
@@ -10,6 +11,7 @@ import { IconInfo } from "../../../shared/components/icons/IconInfo";
 import { IconTeam } from "../../../shared/components/icons/IconTeam";
 import { IconArrow } from "../../../shared/components/icons/IconArrow";
 import { IconSend } from "../../../shared/components/icons/IconSend";
+import { CommandItem } from "../../components/CommandItem";
 
 
 const buttons = [
@@ -34,6 +36,7 @@ const buttons = [
 interface Message {
   text: string;
   role?: "user" | "bot";
+  employeeCards?: EmployeeCard[];
 }
 
 export const ChatPage = () => {
@@ -83,6 +86,17 @@ export const ChatPage = () => {
             return prev;
           }
           next[next.length - 1] = { ...last, text: last.text + chunk };
+          return next;
+        });
+      },
+      onEmployeeCards: (employeeCards) => {
+        setMessages((prev) => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last?.role !== "bot") {
+            return prev;
+          }
+          next[next.length - 1] = { ...last, employeeCards };
           return next;
         });
       },
@@ -137,7 +151,7 @@ export const ChatPage = () => {
   return (
     <div className={styles.container}>
       <div ref={chatRef} className={styles.chat}>
-        <h1 className={styles.title}>Привет, Имя!</h1>
+        <h1 className={styles.title}>Привет, {user?.full_name}!</h1>
   
         <p className={styles.description}>
           Я AI-Budddy, твой помощник в Авито.
@@ -163,9 +177,21 @@ export const ChatPage = () => {
         {messages.length > 0 && (
           <div className={styles.messages}>
             {messages.map((message, index) => (
-              <div key={index} className={`${styles.message} ${message.role === "user" ? styles.user : styles.bot}`}>
-                <p className={styles.message__text}>{message.text}</p>
-              </div>
+              <div
+              key={index}
+              className={`${styles.message} ${message.role === "user" ? styles.user : styles.bot} ${message.employeeCards ? styles.messageWithCards : ""}`}
+            >
+              <p className={styles.message__text}>{message.text}</p>
+              {
+                message.employeeCards && (
+                  <div className={styles.employeeCards}>
+                    {message.employeeCards?.map((employee, cardIndex) => (
+                      <CommandItem employee={employee} key={cardIndex} />
+                    ))}
+                  </div>
+                )
+              }
+            </div>
             ))}
           </div>
         )}

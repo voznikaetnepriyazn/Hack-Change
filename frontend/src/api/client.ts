@@ -23,6 +23,11 @@ export async function apiRequest(
   const headers = new Headers(options?.headers);
 
   const response = await fetch(url, { ...options, headers, credentials });
+
+  if (response.status === 204) {
+    return null;
+  }
+
   let data: unknown = null;
 
   try {

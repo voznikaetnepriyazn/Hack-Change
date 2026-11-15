@@ -23,9 +23,9 @@ export const useQuestionsStore = create<QuestionsState>(() => ({
     },
     {
       id: 1,
-      name: "Доступы и техника",
+      name: "Доступы",
       tab: "access",
-      items: [1, 2, 3, 5],
+      items: [1, 2],
     },
     {
       id: 2,
@@ -37,7 +37,7 @@ export const useQuestionsStore = create<QuestionsState>(() => ({
       id: 3,
       name: "Отпуск и быт",
       tab: "time-off",
-      items: [7, 8],
+      items: [3, 5, 7, 8],
     },
   ],
   questions: [

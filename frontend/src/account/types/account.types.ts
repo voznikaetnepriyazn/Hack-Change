@@ -14,7 +14,7 @@ interface Requests {
 
 export interface User {
   id: string;
-  name: string;
+  full_name: string;
   avatar: string | null;
   position: string;
   phone?: string;
@@ -33,6 +33,25 @@ export interface User {
 
 export interface CurrentUserResponse {
   user: AuthUser;
+}
+
+export interface EmployeeCard {
+  last_name?: string;
+  first_name?: string;
+  avatar?: string;
+  middle_name?: string;
+  full_name?: string;
+  role?: string;
+  position?: string;
+  grade?: string;
+  email?: string;
+  team_id?: string;
+  office?: string;
+  work_format?: string;
+  work_schedule?: string;
+  status?: string;
+  start_date?: string;
+  responsibilities?: string;
 }
 
 export interface Question {
@@ -69,14 +88,3 @@ export interface ContentBlock {
   description: string;
 }
 
-
-export interface Teammate {
-  id: string;
-  name: string;
-  avatar: string;
-  email: string;
-  position: string;
-  phone?: string;
-  login: string;
-  role: UserRole;
-}

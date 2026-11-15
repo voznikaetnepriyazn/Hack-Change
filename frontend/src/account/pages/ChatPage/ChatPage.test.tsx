@@ -45,10 +45,43 @@ describe("ChatPage", () => {
     expect(streamChat).toHaveBeenCalledWith(
       "Расскажи о моей стажировке",
       "intern",
-      expect.any(Object),
+      expect.objectContaining({
+        onDelta: expect.any(Function),
+        onEmployeeCards: expect.any(Function),
+        onDone: expect.any(Function),
+        onError: expect.any(Function),
+      }),
     );
+    expect(screen.getByRole("heading", { name: "Привет, Ева Смирнова!" })).toBeInTheDocument();
     expect(screen.getByText("кусок")).toBeInTheDocument();
     expect(stop).toBeTypeOf("function");
+  });
+
+  it("renders employee cards received from the stream", () => {
+    streamChat.mockImplementation((_message: string, _role: string, handlers: ChatStreamHandlers) => {
+      handlers.onEmployeeCards?.([
+        {
+          full_name: "Иванов Иван Иванович",
+          position: "Backend Developer",
+          office: "Москва",
+        },
+        {
+          first_name: "Ева",
+          role: "Стажёр",
+        },
+      ]);
+      handlers.onDone();
+      return vi.fn();
+    });
+
+    render(<ChatPage />);
+    ask("Кто в моей команде?");
+
+    expect(screen.getByRole("heading", { name: "Иванов Иван Иванович" })).toBeInTheDocument();
+    expect(screen.getByText("Backend Developer")).toBeInTheDocument();
+    expect(screen.getByText("Москва")).toBeInTheDocument();
+    expect(screen.getByText("Стажёр")).toBeInTheDocument();
+    expect(screen.queryByText("Ева")).not.toBeInTheDocument();
   });
 
   it("does not send an empty question and blocks a second send while streaming", () => {

@@ -32,6 +32,17 @@ describe("apiRequest", () => {
     );
   });
 
+  it("returns null for an empty 204 response without reading a body", async () => {
+    const json = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 204, json }),
+    );
+
+    await expect(apiRequest("auth/logout", { method: "POST" })).resolves.toBeNull();
+    expect(json).not.toHaveBeenCalled();
+  });
+
   it("keeps an explicit credentials mode", async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
     vi.stubGlobal("fetch", fetchMock);
@@ -59,6 +70,21 @@ describe("apiRequest", () => {
     await expect(apiRequest("health")).rejects.toThrow(
       "API returned an invalid JSON or empty data response",
     );
+  });
+
+  it("accepts a 204 No Content response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+        json: async () => {
+          throw new Error("no content");
+        },
+      }),
+    );
+
+    await expect(apiRequest("auth/logout", { method: "POST" })).resolves.toBeNull();
   });
 
   it("throws ApiError with the server message", async () => {

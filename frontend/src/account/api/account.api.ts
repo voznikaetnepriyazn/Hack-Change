@@ -1,11 +1,11 @@
 import { API_URL } from "../../api/config";
 import { isCurrentUserResponse } from "../validation/account.validation";
 import ApiError from "../../shared/errors/ApiError";
-import { User } from "../types/account.types";
+import { User, EmployeeCard } from "../types/account.types";
 
 const intern: User = {
   id: "1",
-  name: "Имя Фамилия",
+  full_name: "Имя Фамилия",
   avatar: null,
   position: "Стажёр",
   phone: "+7 (999) 999-99-99",
@@ -43,40 +43,40 @@ const intern: User = {
   vacationStart: new Date(),
   vacationEnd: new Date(new Date().setDate(new Date().getDate() + 10)),
 };
-const intern1: User = {
-  id: "2",
-  avatar:
-    "https://thumb.wikimedia.org/wikipedia/ru/thumb/0/0f/Tom_Holland_as_Spider-Man.jpg/330px-Tom_Holland_as_Spider-Man.jpg?utm_source=ru.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
-  name: "Иван Иванов",
-  position: "Стажёр",
-  phone: "+7 (999) 999-99-98",
-  login: "@ivan",
-  role: "intern" as const,
-  vacationStart: null,
-  vacationEnd: null,
-  command: "Команда 1",
-  post: "Должность",
-  formatWork: "Гибрид, 20 ч/нед",
-  office: "Москва",
-  statusVacation: "Онбординг",
-  githubProfile: {
-    login: "i.ivanov",
-    username: "ivan-ivanov-dev",
-  },
-  requests: [
-    {
-      id: "1",
-      name: "Отгул на 20 ноября",
-      description: "",
-      status: "pending",
-    },
-  ],
-};
+// const intern1: User = {
+//   id: "2",
+//   avatar:
+//     "https://thumb.wikimedia.org/wikipedia/ru/thumb/0/0f/Tom_Holland_as_Spider-Man.jpg/330px-Tom_Holland_as_Spider-Man.jpg?utm_source=ru.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
+//   full_name: "Иван Иванов",
+//   position: "Стажёр",
+//   phone: "+7 (999) 999-99-98",
+//   login: "@ivan",
+//   role: "intern" as const,
+//   vacationStart: null,
+//   vacationEnd: null,
+//   command: "Команда 1",
+//   post: "Должность",
+//   formatWork: "Гибрид, 20 ч/нед",
+//   office: "Москва",
+//   statusVacation: "Онбординг",
+//   githubProfile: {
+//     login: "i.ivanov",
+//     username: "ivan-ivanov-dev",
+//   },
+//   requests: [
+//     {
+//       id: "1",
+//       name: "Отгул на 20 ноября",
+//       description: "",
+//       status: "pending",
+//     },
+//   ],
+// };
 const lead: User = {
   id: "3",
   avatar:
     "https://thumb.wikimedia.org/wikipedia/ru/thumb/0/0f/Tom_Holland_as_Spider-Man.jpg/330px-Tom_Holland_as_Spider-Man.jpg?utm_source=ru.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
-  name: "Иван Иванов",
+  full_name: "Иван Иванов",
   position: "Руководитель",
   phone: "+7 (999) 999-99-98",
   login: "@ivan",
@@ -111,11 +111,51 @@ export const getIntern = async () => {
   return data.user;
 };
 
-
 export interface ChatStreamHandlers {
   onDelta: (text: string) => void;
+  onEmployeeCards?: (cards: EmployeeCard[]) => void;
   onDone: () => void;
   onError: (error: Error) => void;
+}
+
+const employeeCardFields: (keyof EmployeeCard)[] = [
+  "last_name",
+  "first_name",
+  "middle_name",
+  "full_name",
+  "avatar",
+  "role",
+  "position",
+  "grade",
+  "email",
+  "team_id",
+  "office",
+  "work_format",
+  "work_schedule",
+  "status",
+  "start_date",
+  "responsibilities",
+];
+
+function isEmployeeCards(value: unknown): value is EmployeeCard[] {
+  return (
+    Array.isArray(value) &&
+    value.every((card) => {
+      if (!card || typeof card !== "object" || Array.isArray(card)) {
+        return false;
+      }
+
+      const fields = Object.entries(card);
+      return (
+        fields.length > 0 &&
+        fields.every(
+          ([key, fieldValue]) =>
+            employeeCardFields.includes(key as keyof EmployeeCard) &&
+            typeof fieldValue === "string",
+        )
+      );
+    })
+  );
 }
 
 function apiUrl(path: string) {
@@ -187,6 +227,24 @@ export function streamChat(
         }
       };
 
+      source.addEventListener("employee_cards", (event) => {
+        let cards: unknown;
+        try {
+          cards = JSON.parse((event as MessageEvent<string>).data);
+        } catch {
+          source?.close();
+          handlers.onError(new Error("Invalid employee cards event"));
+          return;
+        }
+
+        if (!isEmployeeCards(cards)) {
+          source?.close();
+          handlers.onError(new Error("Invalid employee cards event"));
+          return;
+        }
+        handlers.onEmployeeCards?.(cards);
+      });
+
       source.addEventListener("done", () => {
         finished = true;
         source?.close();
@@ -200,7 +258,10 @@ export function streamChat(
         }
       };
     } catch (error) {
-      if (stopped || (error instanceof DOMException && error.name === "AbortError")) {
+      if (
+        stopped ||
+        (error instanceof DOMException && error.name === "AbortError")
+      ) {
         return;
       }
 

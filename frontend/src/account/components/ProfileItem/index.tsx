@@ -27,11 +27,11 @@ export const ProfileItem = ({
         {user?.avatar ? (
           <img src={user?.avatar} alt="avatar" />
         ) : (
-          getFirstWord(user?.name || "")
+          getFirstWord(user?.full_name || "")
         )}
       </div>
       <div className={`${styles.right} ${isShort ? styles.hidden : ""}`}>
-        <span className={styles.name}>{user?.name}</span>
+        <span className={styles.name}>{user?.full_name}</span>
         <p className={styles.bottom}>
           {size === "large" && user?.role === "intern" && role 
           !== "intern" && <span>{user?.post}</span>}

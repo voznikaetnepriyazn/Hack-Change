@@ -23,7 +23,7 @@ describe("stores", () => {
     expect(useProfileStore.getState().user).toBeNull();
 
     useInternStore.getState().setInternUser(internUser);
-    expect(useInternStore.getState().user?.name).toBe(internUser.name);
+    expect(useInternStore.getState().user?.full_name).toBe(internUser.full_name);
     useInternStore.getState().setInternUser(null);
   });
 

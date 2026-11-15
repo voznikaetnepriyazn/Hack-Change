@@ -107,6 +107,12 @@
 .message__text {
   white-space: pre-wrap;
 }
+.employeeCards{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 10px;
+}
 
 .notice {
   margin-top: 12px;

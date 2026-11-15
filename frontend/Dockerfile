@@ -1,34 +1,24 @@
-
-# Этап 1. Сборка приложения
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Копируем файлы зависимостей
 COPY package*.json ./
-
-# Устанавливаем зависимости
 RUN npm ci
 
-# Копируем исходный код
 COPY . .
-
-# Собираем frontend
 RUN npm run build
 
+FROM node:22-alpine AS runner
 
-# Этап 2. Production-сервер
-FROM nginx:alpine
+WORKDIR /app
+ENV NODE_ENV=production
+ENV BACKEND_PROXY_TARGET=http://host.docker.internal:8080
 
-# Удаляем стандартную конфигурацию Nginx
-RUN rm /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/vite.config.ts ./vite.config.ts
+COPY --from=builder /app/dist ./dist
 
-# Копируем свою конфигурацию
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 3000
 
-# Копируем результат сборки Vite
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]

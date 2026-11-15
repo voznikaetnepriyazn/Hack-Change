@@ -11,4 +11,3 @@ export const validateLoginData = (login: string, password: string) => {
 
   return { login, password };
 }
-

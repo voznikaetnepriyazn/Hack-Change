@@ -12,14 +12,20 @@ const request = vi.mocked(apiRequest);
 const loginPayload = {
   user: {
     id: "usr_1001",
+    full_name: "Ева Смирнова",
     login: "e.smirnova",
     role: "intern",
   },
 };
 
 describe("isLoginResponse", () => {
-  it("accepts a user with id, login and role", () => {
+  it("accepts the backend user identity response", () => {
     expect(isLoginResponse(loginPayload)).toBe(true);
+    expect(
+      isLoginResponse({
+        user: { id: "2", full_name: "Елена", login: "e.morozova", role: "manager" },
+      }),
+    ).toBe(true);
   });
 
   it("rejects malformed payloads", () => {
@@ -27,9 +33,10 @@ describe("isLoginResponse", () => {
     expect(isLoginResponse("user")).toBe(false);
     expect(isLoginResponse({})).toBe(false);
     expect(isLoginResponse({ user: null })).toBe(false);
-    expect(isLoginResponse({ user: { id: 1, login: "a", role: "intern" } })).toBe(false);
-    expect(isLoginResponse({ user: { id: "1", login: 1, role: "intern" } })).toBe(false);
-    expect(isLoginResponse({ user: { id: "1", login: "a", role: 1 } })).toBe(false);
+    expect(isLoginResponse({ user: { id: "1", login: "a", role: "intern" } })).toBe(false);
+    expect(isLoginResponse({ user: { id: "1", full_name: "A", login: "a", role: "unknown" } })).toBe(false);
+    expect(isLoginResponse({ user: { id: 1, full_name: "A", login: "a", role: "intern" } })).toBe(false);
+    expect(isLoginResponse({ user: { id: "1", full_name: "A", login: 1, role: "intern" } })).toBe(false);
   });
 });
 
@@ -63,22 +70,10 @@ describe("logoutUser", () => {
     request.mockReset();
   });
 
-  it("returns the logout message", async () => {
-    request.mockResolvedValue({ message: "bye" });
-
-    await expect(logoutUser()).resolves.toEqual({ message: "bye" });
-    expect(request).toHaveBeenCalledWith("auth/logout", { method: "POST" });
-  });
-
-  it("rejects a response that is not an object", async () => {
+  it("accepts the backend's empty 204 logout response", async () => {
     request.mockResolvedValue(null);
 
-    await expect(logoutUser()).rejects.toThrow("Invalid response format");
-  });
-
-  it("rejects a response without a message", async () => {
-    request.mockResolvedValue({ ok: true });
-
-    await expect(logoutUser()).rejects.toThrow("Invalid response format");
+    await expect(logoutUser()).resolves.toBeUndefined();
+    expect(request).toHaveBeenCalledWith("auth/logout", { method: "POST" });
   });
 });

@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 import { isCurrentUserResponse } from "./account.validation";
 
 describe("isCurrentUserResponse", () => {
-  it("accepts a user with id, login and role", () => {
+  it("accepts the authenticated user identity", () => {
     expect(
       isCurrentUserResponse({
-        user: { id: "1", login: "@test", role: "intern" },
+        user: { id: "1", full_name: "Ева Смирнова", login: "e.smirnova", role: "intern" },
+      }),
+    ).toBe(true);
+    expect(
+      isCurrentUserResponse({
+        user: { id: "2", full_name: "Елена", login: "e.morozova", role: "manager" },
       }),
     ).toBe(true);
   });
@@ -15,12 +20,20 @@ describe("isCurrentUserResponse", () => {
     expect(isCurrentUserResponse(1)).toBe(false);
     expect(isCurrentUserResponse({})).toBe(false);
     expect(isCurrentUserResponse({ user: null })).toBe(false);
-    expect(isCurrentUserResponse({ user: { id: 1, login: "a", role: "intern" } })).toBe(
-      false,
-    );
-    expect(isCurrentUserResponse({ user: { id: "1", login: 1, role: "intern" } })).toBe(
-      false,
-    );
-    expect(isCurrentUserResponse({ user: { id: "1", login: "a", role: 1 } })).toBe(false);
+    expect(
+      isCurrentUserResponse({
+        user: { id: 1, full_name: "A", login: "a", role: "intern" },
+      }),
+    ).toBe(false);
+    expect(
+      isCurrentUserResponse({
+        user: { id: "1", full_name: "A", login: 1, role: "intern" },
+      }),
+    ).toBe(false);
+    expect(
+      isCurrentUserResponse({
+        user: { id: "1", full_name: "A", login: "a", role: "unknown" },
+      }),
+    ).toBe(false);
   });
 });

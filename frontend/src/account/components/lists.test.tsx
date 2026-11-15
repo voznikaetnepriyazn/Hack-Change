@@ -166,21 +166,39 @@ describe("lists and profile cards", () => {
     );
   });
 
-  it("fails to render a teammate card because the component reads an undefined user", () => {
-    expect(() =>
-      render(
-        <CommandItem
-          teammate={{
-            id: "1",
-            name: "Ева",
-            avatar: "",
-            email: "e@example.com",
-            position: "Стажёр",
-            login: "e.smirnova",
-            role: "intern",
-          }}
-        />,
-      ),
-    ).toThrow(    );
+  it("renders an employee card from the passed profile", () => {
+    const { rerender } = render(
+      <CommandItem
+        employee={{
+          full_name: "Ева Смирнова",
+          position: "Стажёр",
+          email: "e.smirnova@avito.ru",
+          responsibilities: "Онбординг и первые задачи",
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Ева Смирнова" })).toBeInTheDocument();
+    expect(screen.getByText("Е")).toBeInTheDocument();
+    expect(screen.getByText("Стажёр")).toBeInTheDocument();
+    expect(screen.getByText("e.smirnova@avito.ru")).toBeInTheDocument();
+    expect(screen.getByText("Онбординг и первые задачи")).toBeInTheDocument();
+
+    rerender(
+      <CommandItem
+        employee={{
+          avatar: "https://example.com/ivan.jpg",
+          position: "Разработчик",
+        }}
+      />,
+    );
+
+    expect(screen.getByAltText("avatar")).toHaveAttribute(
+      "src",
+      "https://example.com/ivan.jpg",
+    );
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    expect(screen.queryByText("e.smirnova@avito.ru")).not.toBeInTheDocument();
+    expect(screen.queryByText("Онбординг и первые задачи")).not.toBeInTheDocument();
   });
 });
