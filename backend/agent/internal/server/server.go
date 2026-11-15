@@ -37,7 +37,7 @@ type Server struct {
 }
 
 type activeStream struct {
-	channel    chan string
+	channel    chan agent.StreamMessage
 	cancel     context.CancelFunc
 	finished   chan struct{}
 	subscribed bool
@@ -135,7 +135,7 @@ func (s *Server) setupRoutes(authHandler *authhandler.Handler, authMiddleware fi
 		}
 		ctx, cancel := context.WithCancel(context.Background())
 		stream := &activeStream{
-			channel:  make(chan string, 100),
+			channel:  make(chan agent.StreamMessage, 100),
 			cancel:   cancel,
 			finished: make(chan struct{}),
 		}
@@ -164,7 +164,7 @@ func (s *Server) setupRoutes(authHandler *authhandler.Handler, authMiddleware fi
 				close(stream.finished)
 			}()
 
-			_, err := s.agent.RunWithChannel(ctx, sessionID, message, stream.channel)
+			_, err := s.agent.RunWithEvents(ctx, sessionID, message, stream.channel)
 			if err != nil {
 				slog.Error("Agent failed", "error", err)
 			}
@@ -225,7 +225,7 @@ func (s *Server) setupRoutes(authHandler *authhandler.Handler, authMiddleware fi
 
 			for {
 				select {
-				case text, ok := <-stream.channel:
+				case message, ok := <-stream.channel:
 					if !ok {
 						fmt.Fprintf(w, "event: done\ndata: [DONE]\n\n")
 						if err := w.Flush(); err != nil {
@@ -247,7 +247,12 @@ func (s *Server) setupRoutes(authHandler *authhandler.Handler, authMiddleware fi
 					}
 
 					s.mu.Unlock()
-					text = strings.ReplaceAll(text, "\r\n", "\n")
+					if message.Event != "" {
+						if _, err := fmt.Fprintf(w, "event: %s\n", message.Event); err != nil {
+							return
+						}
+					}
+					text := strings.ReplaceAll(message.Data, "\r\n", "\n")
 					text = strings.ReplaceAll(text, "\r", "\n")
 					for _, line := range strings.Split(text, "\n") {
 						if _, err := fmt.Fprintf(w, "data: %s\n", line); err != nil {

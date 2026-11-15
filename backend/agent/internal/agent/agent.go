@@ -3,9 +3,9 @@ package agent
 import (
 	"context"
 	_ "embed"
-	"sync"
-
+	"encoding/json"
 	"log/slog"
+	"sync"
 
 	"github.com/sashabaranov/go-openai"
 	"github.com/voznikaetnepriyazn/Hack-Change/agent/internal/agent/run"
@@ -16,10 +16,19 @@ import (
 	tool "github.com/voznikaetnepriyazn/Hack-Change/agent/tools"
 )
 
+// EmployeeCardsEvent is emitted with a JSON array from the search_team tool.
+const EmployeeCardsEvent = "employee_cards"
+
 const (
 	loopWindow    = 20
 	loopThreshold = 5
 )
+
+// StreamMessage is either a default text delta or a named SSE event.
+type StreamMessage struct {
+	Event string
+	Data  string
+}
 
 //go:embed system-prompt.md
 var SystemPromt string
@@ -85,6 +94,33 @@ func (a *Agent) WithStream(enabled bool) *Agent {
 // If the channel is full or has no receiver ready, that delta is dropped.
 // The caller must keep the channel open until RunWithChannel returns.
 func (a *Agent) RunWithChannel(ctx context.Context, sessionID string, userMessage string, outChan chan<- string) (string, error) {
+	return a.runWithEvents(ctx, sessionID, userMessage, func(ev event.Event) {
+		if delta, ok := ev.(event.StreamDeltaEvent); ok {
+			select {
+			case outChan <- delta.Text:
+			default:
+				slog.Warn("Channel overflow, skipping delta")
+			}
+		}
+	})
+}
+
+// RunWithEvents forwards text deltas and structured employee cards to outChan.
+func (a *Agent) RunWithEvents(ctx context.Context, sessionID string, userMessage string, outChan chan<- StreamMessage) (string, error) {
+	return a.runWithEvents(ctx, sessionID, userMessage, func(ev event.Event) {
+		message, ok := streamMessageForEvent(ev)
+		if !ok {
+			return
+		}
+		select {
+		case outChan <- message:
+		default:
+			slog.Warn("Channel overflow, skipping stream event", "event", message.Event)
+		}
+	})
+}
+
+func (a *Agent) runWithEvents(ctx context.Context, sessionID string, userMessage string, forward func(event.Event)) (string, error) {
 	cfg := a.configForSession(sessionID)
 
 	originalOn := cfg.On
@@ -94,18 +130,29 @@ func (a *Agent) RunWithChannel(ctx context.Context, sessionID string, userMessag
 			originalOn(ev)
 		}
 
-		if delta, ok := ev.(event.StreamDeltaEvent); ok {
-			select {
-			case outChan <- delta.Text:
-			default:
-				// channel is full, skip this delta to avoid blocking
-				slog.Warn("Channel overflow, skipping delta")
-			}
-		}
+		forward(ev)
 	}
 
 	result := run.Run(ctx, cfg, userMessage)
 	return result.Output, result.Err
+}
+
+func streamMessageForEvent(ev event.Event) (StreamMessage, bool) {
+	switch typedEvent := ev.(type) {
+	case event.StreamDeltaEvent:
+		return StreamMessage{Data: typedEvent.Text}, true
+	case event.ToolEndEvent:
+		if typedEvent.Name != "search_team" {
+			return StreamMessage{}, false
+		}
+		var cards []json.RawMessage
+		if err := json.Unmarshal([]byte(typedEvent.Result), &cards); err != nil || cards == nil {
+			return StreamMessage{}, false
+		}
+		return StreamMessage{Event: EmployeeCardsEvent, Data: typedEvent.Result}, true
+	default:
+		return StreamMessage{}, false
+	}
 }
 
 // configForSession returns a run-specific config and the persistent history for sessionID.

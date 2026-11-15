@@ -248,3 +248,30 @@ func TestRunWithChannelForwardsStreamDeltasAndEvents(t *testing.T) {
 		t.Errorf("underlying handler received %d stream delta events, want 2", gotDeltaEvents)
 	}
 }
+
+func TestStreamMessageForSearchTeamToolEnd(t *testing.T) {
+	const cardsJSON = `[{"full_name":"Иванов Иван Иванович","position":"Backend Developer"}]`
+	message, ok := streamMessageForEvent(event.ToolEndEvent{
+		Name:   "search_team",
+		Result: cardsJSON,
+	})
+	if !ok {
+		t.Fatal("streamMessageForEvent() did not forward employee cards")
+	}
+	if message.Event != EmployeeCardsEvent || message.Data != cardsJSON {
+		t.Errorf("stream message = %+v, want event %q with card JSON", message, EmployeeCardsEvent)
+	}
+}
+
+func TestStreamMessageDoesNotForwardInvalidOrUnrelatedToolResults(t *testing.T) {
+	tests := []event.ToolEndEvent{
+		{Name: "search_team", Result: "Error: employee search failed"},
+		{Name: "search_team", Result: `{"full_name":"not an array"}`},
+		{Name: "other_tool", Result: `[{"full_name":"Someone"}]`},
+	}
+	for _, toolEvent := range tests {
+		if message, ok := streamMessageForEvent(toolEvent); ok {
+			t.Errorf("streamMessageForEvent(%+v) = %+v, true; want false", toolEvent, message)
+		}
+	}
+}

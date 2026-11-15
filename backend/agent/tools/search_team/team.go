@@ -46,6 +46,24 @@ type Employee struct {
 	Responsibilities string `json:"responsibilities"`
 }
 
+// EmployeeCard contains only the non-sensitive profile fields exposed to the UI.
+type EmployeeCard struct {
+	LastName         string `json:"last_name,omitempty"`
+	FirstName        string `json:"first_name,omitempty"`
+	MiddleName       string `json:"middle_name,omitempty"`
+	FullName         string `json:"full_name,omitempty"`
+	Role             string `json:"role,omitempty"`
+	Position         string `json:"position,omitempty"`
+	Grade            string `json:"grade,omitempty"`
+	TeamID           string `json:"team_id,omitempty"`
+	Office           string `json:"office,omitempty"`
+	WorkFormat       string `json:"work_format,omitempty"`
+	WorkSchedule     string `json:"work_schedule,omitempty"`
+	Status           string `json:"status,omitempty"`
+	StartDate        string `json:"start_date,omitempty"`
+	Responsibilities string `json:"responsibilities,omitempty"`
+}
+
 type TeamTool struct{}
 
 func NewTeamTool() *TeamTool {
@@ -113,17 +131,19 @@ func (t *TeamTool) Execute(ctx context.Context, argsJSON string) (string, error)
 		}
 	}
 	if len(matches) == 0 {
-		return fmt.Sprintf("Сотрудник по запросу «%s» не найден.", query), nil
+		return "[]", nil
 	}
 
-	var result strings.Builder
-	for i, employee := range matches {
-		if i > 0 {
-			result.WriteString("\n\n")
-		}
-		writeEmployee(&result, employee)
+	cards := make([]EmployeeCard, 0, len(matches))
+	for _, employee := range matches {
+		cards = append(cards, employeeCard(employee))
 	}
-	return result.String(), nil
+	result, err := json.Marshal(cards)
+	if err != nil {
+		slog.Error("Failed to encode employee search result", "error", err)
+		return "", fmt.Errorf("failed to encode employee search result: %w", err)
+	}
+	return string(result), nil
 }
 
 func searchTokens(query string) []string {
@@ -211,24 +231,21 @@ func editDistanceAtMostOne(left, right string) bool {
 	return differences <= 1
 }
 
-func writeEmployee(result *strings.Builder, employee Employee) {
-	writeField(result, "Сотрудник", employee.FullName)
-	writeField(result, "Логин", employee.Login)
-	writeField(result, "Роль", employee.Role)
-	writeField(result, "Должность", employee.Position)
-	writeField(result, "Грейд", employee.Grade)
-	writeField(result, "Команда", employee.TeamID)
-	writeField(result, "Офис", employee.Office)
-	writeField(result, "Формат работы", employee.WorkFormat)
-	writeField(result, "График", employee.WorkSchedule)
-	writeField(result, "Статус", employee.Status)
-	writeField(result, "Дата начала работы", employee.StartDate)
-	writeField(result, "Обязанности", employee.Responsibilities)
-}
-
-func writeField(result *strings.Builder, name, value string) {
-	if value == "" {
-		return
+func employeeCard(employee Employee) EmployeeCard {
+	return EmployeeCard{
+		LastName:         employee.LastName,
+		FirstName:        employee.FirstName,
+		MiddleName:       employee.MiddleName,
+		FullName:         employee.FullName,
+		Role:             employee.Role,
+		Position:         employee.Position,
+		Grade:            employee.Grade,
+		TeamID:           employee.TeamID,
+		Office:           employee.Office,
+		WorkFormat:       employee.WorkFormat,
+		WorkSchedule:     employee.WorkSchedule,
+		Status:           employee.Status,
+		StartDate:        employee.StartDate,
+		Responsibilities: employee.Responsibilities,
 	}
-	fmt.Fprintf(result, "%s: %s\n", name, value)
 }

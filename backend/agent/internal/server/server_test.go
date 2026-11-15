@@ -348,6 +348,37 @@ func TestStreamEncodesNewlinesAsSSEDataLines(t *testing.T) {
 	}
 }
 
+func TestStreamSendsEmployeeCardsAsNamedSSEEvent(t *testing.T) {
+	const cardsJSON = `[{"full_name":"Иванов Иван Иванович","position":"Backend Developer"}]`
+	s := newTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "LLM should not be called", http.StatusInternalServerError)
+	})
+	stream := &activeStream{
+		channel:  make(chan agent.StreamMessage, 2),
+		finished: make(chan struct{}),
+	}
+	stream.channel <- agent.StreamMessage{Event: agent.EmployeeCardsEvent, Data: cardsJSON}
+	stream.channel <- agent.StreamMessage{Data: "Here is the employee profile."}
+	close(stream.channel)
+	s.channels["employee-cards"] = stream
+
+	client, baseURL := serveFiberApp(t, s.app)
+	resp := getStreamHTTP(t, client, baseURL, "employee-cards")
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("/stream status = %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read SSE response: %v", err)
+	}
+
+	want := "event: employee_cards\ndata: " + cardsJSON + "\n\ndata: Here is the employee profile.\n\nevent: done\ndata: [DONE]\n\n"
+	if got := string(body); got != want {
+		t.Errorf("SSE body = %q, want %q", got, want)
+	}
+}
+
 func TestChatRejectsNewMessageWhileResponseIsActive(t *testing.T) {
 	firstStarted := make(chan struct{})
 	releaseFirst := make(chan struct{})
