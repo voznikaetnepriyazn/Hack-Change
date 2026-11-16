@@ -5,19 +5,19 @@ import { User, EmployeeCard } from "../types/account.types";
 
 const intern: User = {
   id: "1",
-  full_name: "Имя Фамилия",
+  full_name: "Ева Смирнова",
   avatar: null,
   position: "Стажёр",
   phone: "+7 (999) 999-99-99",
-  login: "@test",
+  login: "@e.smirnova",
   command: "Команда 1",
-  post: "Должность",
+  post: "Стажёр-разработчик (Backend)",
   formatWork: "Гибрид, 20 ч/нед",
   office: "Москва",
   role: "intern" as const,
   statusVacation: "Онбординг",
   githubProfile: {
-    login: "e.smirnova",
+    login: "e.smirnova@avito.ru",
     username: "eva-smirnova-dev",
   },
   requests: [
@@ -76,13 +76,13 @@ const lead: User = {
   id: "3",
   avatar:
     "https://thumb.wikimedia.org/wikipedia/ru/thumb/0/0f/Tom_Holland_as_Spider-Man.jpg/330px-Tom_Holland_as_Spider-Man.jpg?utm_source=ru.wikipedia.org&utm_campaign=parser&utm_content=thumbnail",
-  full_name: "Иван Иванов",
+  full_name: "Дмитрий Волков",
   position: "Руководитель",
   phone: "+7 (999) 999-99-98",
-  login: "@ivan",
+  login: "@d.volkov",
   role: "lead" as const,
   command: "Команда 1",
-  post: "Должность",
+  post: "Senior Backend Developer",
   formatWork: "Гибрид, 40 ч/нед",
   office: "Москва",
 };

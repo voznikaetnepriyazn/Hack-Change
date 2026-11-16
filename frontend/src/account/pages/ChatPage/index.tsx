@@ -1,7 +1,11 @@
 import styles from "./index.module.css";
 import { useEffect, useRef, useState } from "react";
 import { streamChat } from "../../api/account.api";
-import { loadSessionChat, saveSessionChat, clearSessionChat } from "../../chat/sessionChat";
+import {
+  loadSessionChat,
+  saveSessionChat,
+  clearSessionChat,
+} from "../../chat/sessionChat";
 import type { EmployeeCard } from "../../types/account.types";
 import { useProfileStore } from "../../../stores/profileStore";
 import ApiError from "../../../shared/errors/ApiError";
@@ -12,7 +16,6 @@ import { IconTeam } from "../../../shared/components/icons/IconTeam";
 import { IconArrow } from "../../../shared/components/icons/IconArrow";
 import { IconSend } from "../../../shared/components/icons/IconSend";
 import { CommandItem } from "../../components/CommandItem";
-
 
 const buttons = [
   {
@@ -152,14 +155,16 @@ export const ChatPage = () => {
     <div className={styles.container}>
       <div ref={chatRef} className={styles.chat}>
         <h1 className={styles.title}>Привет, {user?.full_name}!</h1>
-  
+
         <p className={styles.description}>
           Я AI-Budddy, твой помощник в Авито.
           <br />
           Задай вопрос или выбери, с чего начать:
         </p>
-  
-        <div className={`${styles.buttons} ${messages.length > 0 ? styles.spaceBottom : ''}`}>
+
+        <div
+          className={`${styles.buttons} ${messages.length > 0 ? styles.spaceBottom : ""}`}
+        >
           {buttons.map((button) => (
             <button
               type="button"
@@ -173,30 +178,32 @@ export const ChatPage = () => {
             </button>
           ))}
         </div>
-  
         {messages.length > 0 && (
           <div className={styles.messages}>
             {messages.map((message, index) => (
-              <div
-              key={index}
-              className={`${styles.message} ${message.role === "user" ? styles.user : styles.bot} ${message.employeeCards ? styles.messageWithCards : ""}`}
-            >
-              <p className={styles.message__text}>{message.text}</p>
-              {
-                message.employeeCards && (
+              <div className={styles.messageContainer} key={index}>
+                <div
+                  className={`${styles.message} ${
+                    message.role === "user" ? styles.user : styles.bot
+                  }`}
+                >
+                  {message.text && (
+                    <p className={styles.message__text}>{message.text}</p>
+                  )}
+                </div>
+                {message.employeeCards && message.employeeCards.length > 0 && (
                   <div className={styles.employeeCards}>
-                    {message.employeeCards?.map((employee, cardIndex) => (
+                    {message.employeeCards.map((employee, cardIndex) => (
                       <CommandItem employee={employee} key={cardIndex} />
                     ))}
                   </div>
-                )
-              }
-            </div>
+                )}
+              </div>
             ))}
           </div>
         )}
       </div>
-  
+
       <div className={styles.bottom__container}>
         <div className={styles.bottom}>
           <input
@@ -213,8 +220,12 @@ export const ChatPage = () => {
               }
             }}
           />
-  
-          <button type="button" onClick={handleQuestionSubmit} disabled={isStreaming}>
+
+          <button
+            type="button"
+            onClick={handleQuestionSubmit}
+            disabled={isStreaming}
+          >
             <IconSend className={styles.arrow} />
           </button>
         </div>
