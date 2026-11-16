@@ -10,6 +10,7 @@
   border: 1px solid rgba(0, 0, 0, 0.25);
   box-shadow: 0px 12px 40px rgba(20, 28, 46, 0.08);
   border-radius: 20px;
+  overflow: hidden;
 }
 
 .top {
@@ -47,10 +48,10 @@
   overflow: hidden;
   opacity: 1;
   white-space: nowrap;
-
+  
   transition:
-    max-width 0.3s ease,
-    opacity 0.15s ease;
+  max-width 0.3s ease,
+  opacity 0.15s ease;
 }
 
 
@@ -58,12 +59,20 @@
   font-weight: 600;
   color: #000000;
   line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+  overflow: hidden;
 }
 
 .email,
 .position {
   color: rgba(0, 0, 0, 0.5);
   line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+  overflow: hidden;
 }
 
 .bottom {
