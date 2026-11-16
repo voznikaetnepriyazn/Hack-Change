@@ -84,6 +84,9 @@
   margin-top: auto;
   padding-bottom: 15px;
 }
+.messageContainer{
+  width: 100%;
+}
 
 .message{
   padding: 15px;

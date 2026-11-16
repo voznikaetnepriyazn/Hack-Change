@@ -181,7 +181,7 @@ export const ChatPage = () => {
         {messages.length > 0 && (
           <div className={styles.messages}>
             {messages.map((message, index) => (
-              <div key={index}>
+              <div className={styles.messageContainer} key={index}>
                 <div
                   className={`${styles.message} ${
                     message.role === "user" ? styles.user : styles.bot
