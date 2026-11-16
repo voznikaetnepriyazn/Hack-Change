@@ -60,11 +60,15 @@ describe("account profile api", () => {
     await vi.advanceTimersByTimeAsync(1000);
 
     await expect(internPromise).resolves.toMatchObject({
-      full_name: "Имя Фамилия",
+      full_name: "Ева Смирнова",
+      login: "@e.smirnova",
+      post: "Стажёр-разработчик (Backend)",
       role: "intern",
     });
     await expect(leadPromise).resolves.toMatchObject({
-      full_name: "Иван Иванов",
+      full_name: "Дмитрий Волков",
+      login: "@d.volkov",
+      post: "Senior Backend Developer",
       role: "lead",
     });
   });
@@ -76,7 +80,8 @@ describe("account profile api", () => {
 
     await expect(pending).resolves.toMatchObject({
       role: "intern",
-      full_name: "Имя Фамилия",
+      full_name: "Ева Смирнова",
+      login: "@e.smirnova",
     });
   });
 });
