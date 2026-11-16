@@ -45,7 +45,7 @@ docker build -t ai-buddy-frontend ./frontend
 Запуск с backend, доступным на хост-машине:
 
 ```bash
-docker run --rm -p 3000:3000 \
+docker run -d --name ai-buddy-frontend -p 3000:3000 \
   -e BACKEND_PROXY_TARGET=http://host.docker.internal:8080 \
   ai-buddy-frontend
 ```
