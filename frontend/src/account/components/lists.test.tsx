@@ -21,6 +21,7 @@ const questions: Question[] = [
 const tasks: Task[] = [
   {
     id: 1,
+    code: "ALPHA-1",
     title: "Сегодня",
     description: "сделать сегодня",
     status: "active",
@@ -28,6 +29,7 @@ const tasks: Task[] = [
   },
   {
     id: 2,
+    code: "ALPHA-2",
     title: "Вчера",
     description: "уже поздно",
     status: "active",
@@ -35,6 +37,7 @@ const tasks: Task[] = [
   },
   {
     id: 3,
+    code: "ALPHA-3",
     title: "Потом",
     description: "ещё рано",
     status: "completed",
@@ -100,7 +103,7 @@ describe("lists and profile cards", () => {
     expect(screen.getByText("Дедлайн: просрочено")).toBeInTheDocument();
     expect(screen.getAllByText(/Дедлайн:/)).toHaveLength(3);
 
-    const overdue = screen.getByText("Вчера").parentElement;
+    const overdue = screen.getByRole("heading", { name: "Вчера" }).parentElement?.parentElement;
     fireEvent.click(overdue?.querySelector("svg") as Element);
     fireEvent.click(screen.getAllByText("Открыть задачу")[0]);
     expect(screen.getByText("сделать сегодня")).toBeInTheDocument();

@@ -1,4 +1,5 @@
 import styles from "./index.module.css";
+import ReactMarkdown from "react-markdown";
 import { Task } from "../../types/account.types";
 import { IconCheck } from "../../../shared/components/icons/IconCheck";
 import { NavLink } from "react-router-dom";
@@ -25,11 +26,14 @@ export const TaskItem = ({ task, isActive, onClick }: TaskItemProps) => {
   };
   return (
     <div className={styles.wrapper}>
-      <h4 className={styles.title}>{task.title}</h4>
+      <div className={styles.head}>
+        <p className={styles.code}>{task.code}</p>
+        <h4 className={styles.title}>{task.title}</h4>
+      </div>
       {isActive && (
-        <p className={`${styles.description} ${styles.text}`}>
-          {task.description}
-        </p>
+        <div className={styles.markdown}>
+          <ReactMarkdown>{task.description}</ReactMarkdown>
+        </div>
       )}
       <p className={`${styles.deadline} ${styles.text}`}>{deadline()}</p>
       {!isActive && (

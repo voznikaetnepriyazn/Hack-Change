@@ -12,7 +12,7 @@ export const DocumentItem = ({
   return (
     <NavLink
       className={styles.wrapper}
-      to={document.link}
+      to={`/account/documents/${document.id}`}
       target="_blank"
     >
       <div className={styles.document}>

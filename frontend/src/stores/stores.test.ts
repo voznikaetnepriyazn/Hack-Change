@@ -30,6 +30,8 @@ describe("stores", () => {
 
   it("toggles a task status and leaves other tasks untouched", () => {
     const before = useTasksStore.getState().tasks.find((task) => task.id === 1);
+    expect(before?.code).toBe("ALPHA-101");
+    expect(before?.title).toBe("Настроить локальное окружение");
     expect(before?.status).toBe("active");
 
     useTasksStore.getState().changeTaskStatus(1);
@@ -37,12 +39,15 @@ describe("stores", () => {
       "completed",
     );
     expect(useTasksStore.getState().tasks.find((task) => task.id === 2)?.status).toBe(
+      "active",
+    );
+    expect(useTasksStore.getState().tasks.find((task) => task.id === 3)?.status).toBe(
       "completed",
     );
 
     useTasksStore.getState().changeTaskStatus(2);
     expect(useTasksStore.getState().tasks.find((task) => task.id === 2)?.status).toBe(
-      "active",
+      "completed",
     );
 
     useTasksStore.getState().changeTaskStatus(999);
