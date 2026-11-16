@@ -28,6 +28,7 @@ Vite слушает `0.0.0.0:3000` (порт фиксирован через `st
 |---|---|
 | `npm run build` | Проверка TypeScript и production-сборка |
 | `npm test -- --run` | Запуск тестов Vitest один раз |
+| `npm run test:coverage` | Запуск тестов для проверки покрытия кода |
 | `npm run preview` | Локальный просмотр production-сборки на порту 3000 |
 
 Production-сборка создаётся в `dist`.
