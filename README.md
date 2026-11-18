@@ -169,6 +169,13 @@ docker compose up --pull always -d
 | `GET` | `/stream` | Стриминг ответов агента (SSE) |
 | `GET` | `/health` | Базовый healthcheck (доступен из терминала) |
 
+### Данные для авторизации
+| Логин | Пароль | Роль |
+|-------|----------|----------|
+| e.smirnova | Password123! | Стажёр |
+| d.volkov | MentorPass123! | Руководитель |
+| e.smirnova | ManagerPass123! | Руководитель |
+
 ## Структура проекта
 
 ```
